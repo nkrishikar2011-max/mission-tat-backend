@@ -1,137 +1,106 @@
 // frontend/src/pages/Premium/PremiumBuy.jsx
-// (Taddan navi file - Midnight Cyber Gold Theme sathe Razorpay Payment Gateway Hub)
+// (FARJIYAT AKHI FILE REPLACE - Testing Guest Bypass Inside Razorpay Window)
 
 import React, { useState } from "react";
 import axios from "axios";
-import { getAuth } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { auth } from "../../config/firebase";
 
-const API_BASE_URL = "https://mission-tat-backend.onrender.com";
+const API_BASE_URL = "http://localhost:5000";
 
 export default function PremiumBuy() {
-  const auth = getAuth();
-  const user = auth.currentUser;
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-
-  // Load Razorpay SDK Script Dynamically
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
+  const user = auth?.currentUser;
 
   const handlePayment = async () => {
-    if (!user) {
-      alert("🚨 Premium package kharidva mate pehla login karo bhai!");
-      navigate("/login");
-      return;
-    }
-
-    setLoading(true);
-    const resScript = await loadRazorpayScript();
-
-    if (!resScript) {
-      alert("Razorpay SDK load thama bhool thai. Net check karo bhai!");
-      setLoading(false);
-      return;
-    }
+    // ટેસ્ટિંગ માટે ગેસ્ટ યુઝર ફિક્સ: જો લોગિન ન હોય તો પણ મોક આઈડી વાપરો
+    const userId = user ? user.uid : "TEST_GUEST_USER_123";
+    const userEmail = user ? user.email : "guest@missiontat.com";
+    const userPhone = user ? user.phoneNumber : "9999999999";
 
     try {
-      // 1. Create order on backend
+      setLoading(true);
+      
+      // 1. બેકએન્ડ પરથી Razorpay ઓર્ડર આઈડી જનરેટ કરો
       const orderRes = await axios.post(`${API_BASE_URL}/api/payments/create-order`, {
-        userId: user.uid,
-        amount: 49, // ₹49 Rupees Only
+        userId: userId,
+        amount: 49
       });
 
-      const { id: order_id, amount, currency } = orderRes.data;
+      const orderData = orderRes.data;
 
-      // 2. Open Razorpay Checkout Window
+      // 2. Razorpay ચેકઆઉટ કોન્ફિગરેશન સેટઅપ
       const options = {
-        key: "rzp_test_YOUR_KEY_HERE", // Tare real key sathe replace karvi
-        amount: amount.toString(),
-        currency: currency,
-        name: "Mission TAT Gujarat",
-        description: "Premium Mock Test Module Unlock",
-        image: "https://lh3.googleusercontent.com/d/YOUR_IMAGE_ID", // Channel logo url
-        order_id: order_id,
+        key: "rzp_test_5M8UBrwvserR8o", // તારી ટેસ્ટ કી આઈડી
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "MISSION TAT GUJARAT",
+        description: "Unlimited Access Premium Pass",
+        order_id: orderData.id,
         handler: async function (response) {
-          // 3. Verify payment on backend after success
           try {
+            // 3. પેમેન્ટ વેરિફિકેશન એપીઆઈ કોલ
             const verifyRes = await axios.post(`${API_BASE_URL}/api/payments/verify`, {
-              userId: user.uid,
+              userId: userId,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpayOrderId: response.razorpay_order_id,
-              razorpaySignature: response.razorpay_signature,
+              razorpaySignature: response.razorpay_signature
             });
 
             if (verifyRes.data.success) {
-              alert("👑 Badhai ho bhai! Premium status active thai gayu!");
-              navigate("/mock-test/dashboard");
-            } else {
-              alert("Payment verification fail thayu!");
+              alert("👑 બધાઈ હો ભાઈ! તમારો પ્રીમિયમ પાસ એક્ટિવેટ થઈ ગયો છે.");
+              window.location.href = "/mock-test/dashboard";
             }
           } catch (err) {
-            console.error(err);
-            alert("Payment verify karvama error aavi!");
+            alert("❌ વેરિફિકેશન ફેલ થયું ભાઈ!");
           }
         },
         prefill: {
-          name: user.displayName || "",
-          email: user.email || "",
+          name: user?.displayName || "Guest Student",
+          email: userEmail,
+          contact: userPhone
         },
         theme: {
-          color: "#FFE07D", // Cyber Gold Theme Primary Color
-        },
+          color: "#FFE07D" // Gold Aura Theme
+        }
       };
 
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.open();
-    } catch (err) {
-      console.error(err);
-      alert("Backend order creation ma locho thayo!");
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+    } catch (error) {
+      console.error("Payment initiation failed:", error);
+      alert("❌ પેમેન્ટ વિન્ડો ઓપન કરવામાં સમસ્યા આવી ભાઈ!");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ backgroundColor: "#09090b", color: "#f4f4f5", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", padding: "20px", fontFamily: "sans-serif" }}>
-      
-      {/* Glowing Premium Box */}
-      <div style={{ background: "linear-gradient(135deg, #1c1c1e 0%, #09090b 100%)", border: "2px solid #FFE07D", padding: "40px", borderRadius: "24px", maxWidth: "450px", width: "100%", textAlign: "center", boxShadow: "0 0 30px rgba(255, 224, 125, 0.15)" }}>
+    <div style={{ backgroundColor: "#09090b", color: "#f4f4f5", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", fontFamily: "sans-serif", padding: "20px" }}>
+      <div style={{ maxWidth: "420px", width: "100%", backgroundColor: "#1c1c1e", border: "2px solid #FFE07D", borderRadius: "24px", padding: "40px 30px", textAlign: "center", boxShadow: "0 10px 30px rgba(255, 224, 125, 0.1)" }}>
         
-        <div style={{ fontSize: "50px", marginBottom: "10px" }}>👑</div>
-        <h1 style={{ margin: "0 0 10px 0", color: "#fff", fontSize: "26px" }}>MISSION TAT PREMIUM</h1>
-        <p style={{ color: "#FFE07D", fontWeight: "bold", fontSize: "14px", letterSpacing: "1px" }}>UNLIMITIED ACCESS PASS</p>
-        
-        <div style={{ height: "1px", backgroundColor: "#27272a", margin: "24px 0" }}></div>
-        
-        {/* Features List */}
-        <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: "14px", marginBottom: "30px" }}>
-          <div style={{ display: "flex", gap: "10px", fontSize: "15px" }}>✔️ <span style={{ color: "#e4e4e7" }}>150 Prashno vali badhi j VIP Mock Tests</span></div>
-          <div style={{ display: "flex", gap: "10px", fontSize: "15px" }}>✔️ <span style={{ color: "#e4e4e7" }}>Instant Paper Solution & Analytics</span></div>
-          <div style={{ display: "flex", gap: "10px", fontSize: "15px" }}>✔️ <span style={{ color: "#e4e4e7" }}>Direct PDF Report Download Option</span></div>
-          <div style={{ display: "flex", gap: "10px", fontSize: "15px" }}>✔️ <span style={{ color: "#e4e4e7" }}>Golden Aura Profile Badge Activation</span></div>
+        <span style={{ fontSize: "36px" }}>👑</span>
+        <h2 style={{ margin: "10px 0 6px 0", fontSize: "24px", letterSpacing: "1px", color: "#fff" }}>MISSION TAT PREMIUM</h2>
+        <p style={{ color: "#FFE07D", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "2px", margin: "0 0 30px 0" }}>Unlimited Access Pass</p>
+
+        <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: "14px", marginBottom: "35px", fontSize: "14px", color: "#e4e4e7" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}><span>✓</span> 150 પ્રશ્નો વાળી બધી જ VIP મોક ટેસ્ટ્સ</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}><span>✓</span> ઇન્સ્ટન્ટ પેપર સોલ્યુશન અને એનાલિટિક્સ</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}><span>✓</span> ડાયરેક્ટ PDF રિપોર્ટ ડાઉનલોડ ઓપ્શન</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}><span>✓</span> ગોલ્ડન ઓરા પ્રોફાઇલ બેજ એક્ટિવેશન</div>
         </div>
 
-        {/* Price Tag */}
-        <div style={{ marginBottom: "24px" }}>
-          <span style={{ fontSize: "40px", fontWeight: "bold", color: "#fff" }}>₹49</span>
-          <span style={{ color: "#71717a", textDecoration: "line-through", marginLeft: "10px", fontSize: "18px" }}>₹199</span>
-          <p style={{ margin: "4px 0 0 0", color: "#4ade80", fontSize: "12px", fontWeight: "bold" }}>🎉 75% OFF ON INITIAL LAUNCH</p>
+        <div style={{ marginBottom: "30px" }}>
+          <div style={{ fontSize: "32px", fontWeight: "900", color: "#fff" }}>₹49 <span style={{ fontSize: "16px", color: "#71717a", textDecoration: "line-through", fontWeight: "normal" }}>₹199</span></div>
+          <span style={{ fontSize: "11px", color: "#4ade80", fontWeight: "bold" }}>⚡ 75% OFF ON INITIAL LAUNCH</span>
         </div>
 
-        <button
+        <button 
           onClick={handlePayment}
           disabled={loading}
-          style={{ width: "100%", background: "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)", color: "#000", border: "none", padding: "16px", borderRadius: "14px", fontWeight: "bold", cursor: "pointer", fontSize: "16px", boxShadow: "0 4px 15px rgba(255, 224, 125, 0.3)", transition: "all 0.2s" }}
+          style={{ width: "100%", background: "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)", color: "#000", border: "none", padding: "16px", borderRadius: "14px", fontWeight: "bold", fontSize: "16px", cursor: "pointer", transition: "all 0.2s" }}
         >
-          {loading ? "Processing..." : "Secure Pay with Razorpay"}
+          {loading ? "⚙️ લોડિંગ..." : "Secure Pay with Razorpay"}
         </button>
 
       </div>
