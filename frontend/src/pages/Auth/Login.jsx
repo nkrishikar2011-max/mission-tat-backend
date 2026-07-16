@@ -1,9 +1,10 @@
 // frontend/src/pages/Auth/Login.jsx
-// (FARJIYAT AKHI FILE REPLACE - Live Firebase Cloud Login Engine)
+// (FARJIYAT AKHI FILE REPLACE - Cloud Firestore Profile Synced Engine)
 
 import React, { useState } from "react";
-import { auth } from "../../firebase";
+import { auth, db } from "../../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function Login() {
   const [mobileNumber, setMobileNumber] = useState("");
@@ -21,31 +22,53 @@ export default function Login() {
         return;
       }
 
-      // 🔐 FIREBASE CLOUD MASQUERADE LAYER
-      // મોબાઈલ નંબરને ફાયરબેઝ વેલિડેશન માટે સિક્યોર વર્ચ્યુઅલ ડોમેઈન માસ્કમાં કન્વર્ટ કરો
       const secureEmail = `${mobileNumber}@missiontat.com`;
 
-      // Firebase Authentication સાથે લાઈવ સાઈન-ઈન વેરિફિકેશન
+      // 1. Firebase Auth માં સાઈન-ઇન કરો
       const userCredential = await signInWithEmailAndPassword(auth, secureEmail, password);
       const user = userCredential.user;
 
-      alert("🎉 ફાયરબેઝ વેલિડેશન સક્સેસ! મિશન TAT પોર્ટલ પર આપનું સ્વાગત છે ભાઈ.");
+      // 2. Firebase Cloud Firestore માંથી શિક્ષકનું અસલી નામ અને અનલોક ડેટા ખેંચો
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      let teacherName = "શિક્ષક મિત્ર";
+      let unlockStatus = {
+        isTet1Unlocked: false,
+        isTet2MathsUnlocked: false,
+        isTet2BhashaUnlocked: false,
+        isTet2SamajikUnlocked: false
+      };
+
+      if (userDocSnap.exists()) {
+        const data = userDocSnap.data();
+        teacherName = data.name || "શિક્ષક મિત્ર";
+        unlockStatus = {
+          isTet1Unlocked: data.isTet1Unlocked || false,
+          isTet2MathsUnlocked: data.isTet2MathsUnlocked || false,
+          isTet2BhashaUnlocked: data.isTet2BhashaUnlocked || false,
+          isTet2SamajikUnlocked: data.isTet2SamajikUnlocked || false
+        };
+      }
+
+      alert(`🎉 લોગિન સફળ! મિશન TAT પોર્ટલ પર આપનું સ્વાગત છે, ${teacherName} સર.`);
       
-      // સેશન સુરક્ષા માટે લાઈવ લોગિન ડેટા લોકલ સ્ટોરેજમાં સેટ કરો
+      // ગ્લોબલ સેશન મેનેજમેન્ટ - નામ અને બધા વિષયના અનલોક સ્ટેટસ લોક કરી દીધા
       localStorage.setItem("mission_tat_logged_in_user", JSON.stringify({
         uid: user.uid,
+        name: teacherName,
         mobile: mobileNumber,
-        role: "teacher"
+        ...unlockStatus
       }));
 
-      // સીધા મોક ટેસ્ટ ડેશબોર્ડ પર રીડાયરેક્ટ કરો
+      // સીધા મેઇન મોક ટેસ્ટ ડેશબોર્ડ પર રીડાયરેક્ટ કરો
       window.location.href = "/mock-test/dashboard";
     } catch (err) {
-      console.error("Firebase Login Engine Error:", err);
+      console.error("Firebase Login Sync Error:", err);
       if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
-        alert("🔒 મોબાઈલ નંબર અથવા પાસવર્ડ ખોટો છે ભાઈ! ફરીથી ચેક કરી લો.");
+        alert("🔒 મોબાઈલ નંબર અથવા પાસવર્ડ ખોટો છે ભાઈ!");
       } else {
-        alert(`❌ લોગિન ફેઈલ થયું ભાઈ: ${err.message}`);
+        alert(`❌ લોગિન ફેઈલ: ${err.message}`);
       }
     } finally {
       setLoading(false);
@@ -92,7 +115,7 @@ export default function Login() {
             disabled={loading}
             style={{ width: "100%", background: "#2980b9", color: "#ffffff", border: "none", padding: "14px", borderRadius: "12px", fontWeight: "bold", fontSize: "15px", cursor: "pointer", marginTop: "10px" }}
           >
-            {loading ? "⚙️ સિક્યોર વેરિફિકેશન..." : "પોર્ટલમાં લોગિન કરો ➡️"}
+            {loading ? "⚙️ પ્રોફાઇલ વેરિફિકેશન..." : "પોર્ટલમાં લોગિન કરો ➡️"}
           </button>
 
         </form>
