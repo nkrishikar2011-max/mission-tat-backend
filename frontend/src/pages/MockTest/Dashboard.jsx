@@ -1,17 +1,16 @@
 // frontend/src/pages/MockTest/Dashboard.jsx
-// (FARJIYAT AKHI FILE REPLACE - Firebase Initialization Fix & Gold Aura UI)
+// (FARJIYAT AKHI FILE REPLACE - 404 Guest Bypass and Fetch Interceptor Fix)
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-// ફિક્સ: ડાયરેક્ટ ફાયરબેઝ લાઇબ્રેરીના બદલે તારા પ્રોજેક્ટની સાચી કન્ફિગ ફાઇલમાંથી auth ઇમ્પોર્ટ કર્યું
 import { auth } from "../../config/firebase"; 
 
 const API_BASE_URL = "https://mission-tat-backend.onrender.com";
 
 export default function MockTestDashboard() {
   const navigate = useNavigate();
-  const user = auth?.currentUser; // સાચો લોગિન યુઝર ઓબ્જેક્ટ
+  const user = auth?.currentUser; 
   
   const [testList, setTestList] = useState([]);
   const [history, setHistory] = useState([]);
@@ -20,39 +19,41 @@ export default function MockTestDashboard() {
   const [premiumSubject, setPremiumSubject] = useState("");
 
   useEffect(() => {
-    // જો તત્કાલ યુઝર ઓબ્જેક્ટ ન મળે (પેજ રિફ્રેશ વખતે), તો ૧ સેકન્ડ માટે લોડિંગ બતાવો અથવા વેઇટ કરો
-    if (!user) {
-      // ઓલ્ટરનેટિવ સેફ ચેક: જો રિયલ લોગિન નથી તો ફ્રી ટ્રાયલ તરીકે ડેટા બતાવો અથવા રીડાયરેક્ટ કરો
-      // ડેવલપમેન્ટ મોડ માટે સેફ ચેક રાખ્યો છે જેથી કમ્પાઈલર અટકે નહીં
-      console.log("Firebase current user is initializing...");
-    }
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        // જો યુઝર લોગિન હોય તો જ તેનું પ્રીમિયમ સ્ટેટસ અને હિસ્ટ્રી ડેટાબેઝમાંથી લાવો
+        if (user) {
+          try {
+            const userRes = await axios.get(`${API_BASE_URL}/api/users/${user.uid}`);
+            if (userRes.data && userRes.data.isPremium) {
+              setIsPremium(true);
+              setPremiumSubject(userRes.data.premiumSubject || "TET_2_MATHS");
+            }
+          } catch (userErr) {
+            console.log("Premium status load error, defaulting to free:", userErr);
+          }
 
-    const uid = user ? user.uid : "GUEST_USER_TEMPORARY";
-
-    // 1. Fetch User Premium Status from Database
-    axios.get(`${API_BASE_URL}/api/users/${uid}`)
-      .then(res => {
-        if (res.data && res.data.isPremium) {
-          setIsPremium(true);
-          setPremiumSubject(res.data.premiumSubject || "TET_2_MATHS");
+          try {
+            const historyRes = await axios.get(`${API_BASE_URL}/api/mock-tests/user-history/${user.uid}`);
+            if (historyRes.data) setHistory(historyRes.data);
+          } catch (histErr) {
+            console.log("History load error:", histErr);
+          }
         }
-        
-        // 2. Load Tests and Attempts parallelly
-        return Promise.all([
-          axios.get(`${API_BASE_URL}/api/mock-tests/all`),
-          axios.get(`${API_BASE_URL}/api/mock-tests/user-history/${uid}`)
-        ]);
-      })
-      .then(([testsRes, historyRes]) => {
-        if (testsRes && testsRes.data) setTestList(testsRes.data);
-        if (historyRes && historyRes.data) setHistory(historyRes.data);
+
+        // 2. બધી ઉપલબ્ધ ટેસ્ટનું લિસ્ટ હંમેશા લોડ કરો (ભલે યુઝર લોગિન હોય કે ગેસ્ટ હોય)
+        const testsRes = await axios.get(`${API_BASE_URL}/api/mock-tests/all`);
+        if (testsRes.data) setTestList(testsRes.data);
+
+      } catch (globalErr) {
+        console.error("Global fetch error on dashboard:", globalErr);
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error("Dashboard fetch error:", err);
-        // એરર આવે તો પણ સ્ક્રીન બ્લેક થવા દેવાના બદલે લોડિંગ બંધ કરી દઈએ
-        setLoading(false); 
-      });
+      }
+    };
+
+    fetchDashboardData();
   }, [user]);
 
   if (loading) return <div style={{ color: "#FFE07D", backgroundColor: "#09090b", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>⚙️ પ્રીમિયમ ડેશબોર્ડ લોડ થઈ રહ્યું છે...</div>;
@@ -81,7 +82,7 @@ export default function MockTestDashboard() {
             <p style={{ color: "#a1a1aa", marginTop: "6px" }}>મિશન TAT ગુજરાત ઓટોમેટેડ ટેસ્ટ પોર્ટલ</p>
           </div>
 
-          {/* Golden Badge profile according to database */}
+          {/* Golden Badge profile */}
           <div className={isPremium ? "premium-card" : ""} style={{ backgroundColor: "#1c1c1e", padding: "20px", borderRadius: "20px", border: isPremium ? "none" : "1px solid #27272a", display: "flex", alignItems: "center", gap: "16px" }}>
             <div style={{ width: "50px", height: "50px", borderRadius: "50%", background: isPremium ? "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)" : "#27272a", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "24px", color: "#000" }}>
               {isPremium ? "👑" : "👤"}
