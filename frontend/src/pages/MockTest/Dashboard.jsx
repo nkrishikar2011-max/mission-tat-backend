@@ -1,12 +1,13 @@
 // frontend/src/pages/MockTest/Dashboard.jsx
-// (FARJIYAT AKHI FILE REPLACE - 404 Guest Bypass and Fetch Interceptor Fix)
+// (FARJIYAT AKHI FILE REPLACE - Localhost Port 5000 Sync Fix)
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { auth } from "../../config/firebase"; 
 
-const API_BASE_URL = "https://mission-tat-backend.onrender.com";
+// ફિક્સ: લાઈવ રેન્ડરના બદલે લોકલ બેકએન્ડ સર્વરનો પાથ સેટ કર્યો
+const API_BASE_URL = "http://localhost:5000";
 
 export default function MockTestDashboard() {
   const navigate = useNavigate();
@@ -22,7 +23,6 @@ export default function MockTestDashboard() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // જો યુઝર લોગિન હોય તો જ તેનું પ્રીમિયમ સ્ટેટસ અને હિસ્ટ્રી ડેટાબેઝમાંથી લાવો
         if (user) {
           try {
             const userRes = await axios.get(`${API_BASE_URL}/api/users/${user.uid}`);
@@ -42,7 +42,7 @@ export default function MockTestDashboard() {
           }
         }
 
-        // 2. બધી ઉપલબ્ધ ટેસ્ટનું લિસ્ટ હંમેશા લોડ કરો (ભલે યુઝર લોગિન હોય કે ગેસ્ટ હોય)
+        // બધી ઉપલબ્ધ ટેસ્ટનું લિસ્ટ લોકલ સર્વરમાંથી ફેચ થશે
         const testsRes = await axios.get(`${API_BASE_URL}/api/mock-tests/all`);
         if (testsRes.data) setTestList(testsRes.data);
 
@@ -62,7 +62,6 @@ export default function MockTestDashboard() {
     <div style={{ backgroundColor: "#09090b", color: "#f4f4f5", minHeight: "100vh", padding: "40px 24px", fontFamily: "sans-serif" }}>
       <div style={{ maxWidth: "1050px", margin: "0 auto" }}>
         
-        {/* Glowing Animation Tags */}
         <style>{`
           @keyframes goldGlow {
             0% { border-color: #FFE07D; box-shadow: 0 0 5px rgba(255,224,125,0.2); }
@@ -75,14 +74,12 @@ export default function MockTestDashboard() {
           }
         `}</style>
 
-        {/* Dashboard Top Row */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: "24px", marginBottom: "40px" }}>
           <div>
             <h1 style={{ margin: 0, fontSize: "32px", color: "#fff" }}>🎯 મોક ટેસ્ટ સેન્ટર</h1>
             <p style={{ color: "#a1a1aa", marginTop: "6px" }}>મિશન TAT ગુજરાત ઓટોમેટેડ ટેસ્ટ પોર્ટલ</p>
           </div>
 
-          {/* Golden Badge profile */}
           <div className={isPremium ? "premium-card" : ""} style={{ backgroundColor: "#1c1c1e", padding: "20px", borderRadius: "20px", border: isPremium ? "none" : "1px solid #27272a", display: "flex", alignItems: "center", gap: "16px" }}>
             <div style={{ width: "50px", height: "50px", borderRadius: "50%", background: isPremium ? "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)" : "#27272a", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "24px", color: "#000" }}>
               {isPremium ? "👑" : "👤"}
@@ -97,7 +94,6 @@ export default function MockTestDashboard() {
           </div>
         </div>
 
-        {/* Tests List Display Section */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px" }}>
           <div>
             <h3 style={{ color: "#fff", marginBottom: "20px" }}>🚀 ઉપલબ્ધ મોક ટેસ્ટ</h3>
@@ -140,7 +136,6 @@ export default function MockTestDashboard() {
             </div>
           </div>
 
-          {/* Right Side: Attempt History Column */}
           <div>
             <h3 style={{ color: "#fff", marginBottom: "20px" }}>📊 તમારો પરફોર્મન્સ ટ્રેકર</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
