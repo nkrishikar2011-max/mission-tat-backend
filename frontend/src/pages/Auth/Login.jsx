@@ -1,7 +1,9 @@
 // frontend/src/pages/Auth/Login.jsx
-// (FARJIYAT AKHI FILE REPLACE - Secure Database Validation & Comfort Layout Engine)
+// (FARJIYAT AKHI FILE REPLACE - Live Firebase Cloud Login Engine)
 
 import React, { useState } from "react";
+import { auth } from "../../firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function Login() {
   const [mobileNumber, setMobileNumber] = useState("");
@@ -19,36 +21,32 @@ export default function Login() {
         return;
       }
 
-      // 🔐 HIGH-SECURITY VALIDATION LAYER
-      // લોકલ ડેટાબેઝ સેન્ડબોક્સમાંથી યુઝરનો ડેટા ખેંચો
-      const localUserData = localStorage.getItem(`mission_tat_auth_${mobileNumber}`);
+      // 🔐 FIREBASE CLOUD MASQUERADE LAYER
+      // મોબાઈલ નંબરને ફાયરબેઝ વેલિડેશન માટે સિક્યોર વર્ચ્યુઅલ ડોમેઈન માસ્કમાં કન્વર્ટ કરો
+      const secureEmail = `${mobileNumber}@missiontat.com`;
+
+      // Firebase Authentication સાથે લાઈવ સાઈન-ઈન વેરિફિકેશન
+      const userCredential = await signInWithEmailAndPassword(auth, secureEmail, password);
+      const user = userCredential.user;
+
+      alert("🎉 ફાયરબેઝ વેલિડેશન સક્સેસ! મિશન TAT પોર્ટલ પર આપનું સ્વાગત છે ભાઈ.");
       
-      if (!localUserData) {
-        alert("❌ આ મોબાઈલ નંબર પર કોઈ એકાઉન્ટ મળ્યું નથી ભાઈ! પહેલા સાઈન-અપ કરો.");
-        setLoading(false);
-        return;
-      }
-
-      const parsedUser = JSON.parse(localUserData);
-      // પ્લેન પાસવર્ડને માસ્ક્ડ ટોકન સાથે સરખાવવા માટે Base64 કન્વર્ઝન
-      const incomingMaskedPassword = btoa(password);
-
-      if (parsedUser.secretToken !== incomingMaskedPassword) {
-        alert("🔒 પાસવર્ડ ખોટો છે ભાઈ! ફરીથી પ્રયાસ કરો.");
-        setLoading(false);
-        return;
-      }
-
-      alert("🎉 લોગિન સફળ થયું! મિશન TAT પોર્ટલ પર આપનું સ્વાગત છે ભાઈ.");
-      
-      // સેશન સિક્યોરિટી માટે કરન્ટ લોગિન ટોકન સેટ કરો
-      localStorage.setItem("mission_tat_logged_in_user", JSON.stringify(parsedUser));
+      // સેશન સુરક્ષા માટે લાઈવ લોગિન ડેટા લોકલ સ્ટોરેજમાં સેટ કરો
+      localStorage.setItem("mission_tat_logged_in_user", JSON.stringify({
+        uid: user.uid,
+        mobile: mobileNumber,
+        role: "teacher"
+      }));
 
       // સીધા મોક ટેસ્ટ ડેશબોર્ડ પર રીડાયરેક્ટ કરો
       window.location.href = "/mock-test/dashboard";
     } catch (err) {
-      console.error("Login authorization failed:", err);
-      alert("❌ લોગિન પ્રોસેસમાં કોઈ ખામી આવી ભાઈ!");
+      console.error("Firebase Login Engine Error:", err);
+      if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+        alert("🔒 મોબાઈલ નંબર અથવા પાસવર્ડ ખોટો છે ભાઈ! ફરીથી ચેક કરી લો.");
+      } else {
+        alert(`❌ લોગિન ફેઈલ થયું ભાઈ: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -60,7 +58,7 @@ export default function Login() {
         
         <span style={{ fontSize: "38px" }}>🎯</span>
         <h2 style={{ margin: "12px 0 6px 0", fontSize: "24px", color: "#2f3640", fontWeight: "bold" }}>મિશન TAT ગુજરાત</h2>
-        <p style={{ color: "#7f8c8d", fontSize: "13px", margin: "0 0 30px 0" }}>શિક્ષક ઓટોમેટેડ પોર્ટલ લોગિન</p>
+        <p style={{ color: "#7f8c8d", fontSize: "13px", margin: "0 0 30px 0" }}>શિક્ષક ઓટોમેટેડ ક્લાઉડ લોગિન</p>
 
         <form onSubmit={handleLoginSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px", textAlign: "left" }}>
           
@@ -94,7 +92,7 @@ export default function Login() {
             disabled={loading}
             style={{ width: "100%", background: "#2980b9", color: "#ffffff", border: "none", padding: "14px", borderRadius: "12px", fontWeight: "bold", fontSize: "15px", cursor: "pointer", marginTop: "10px" }}
           >
-            {loading ? "⚙️ વેલિડેશન ચાલુ છે..." : "પોર્ટલમાં લોગિન કરો ➡️"}
+            {loading ? "⚙️ સિક્યોર વેરિફિકેશન..." : "પોર્ટલમાં લોગિન કરો ➡️"}
           </button>
 
         </form>
