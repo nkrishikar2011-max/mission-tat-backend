@@ -1,129 +1,143 @@
 // frontend/src/pages/Admin/MockTestManager.jsx
-// (Taddan navi file - Admin mate automatic 150 questions upload hub)
+// (FARJIYAT AKHI FILE REPLACE - Full Admin Control Console)
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const API_BASE_URL = "https://mission-tat-backend.onrender.com";
 
 export default function MockTestManager() {
-  const [testDetails, setTestDetails] = useState({
-    title: "",
-    description: "",
-    examType: "TET_1",
-    testNumber: "1",
-    duration: "120",
-    isPaid: true
-  });
-  
-  const [bulkText, setBulkText] = useState("");
-  const [status, setStatus] = useState({ loading: false, success: null, error: null });
+  const [tests, setTests] = useState([]);
+  const [bulkJson, setBulkJson] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [statusMsg, setStatusMsg] = useState({ type: "", text: "" });
 
-  const handlePublish = async (e) => {
-    e.preventDefault();
-    setStatus({ loading: true, success: null, error: null });
+  // Fetch Existing Tests
+  useEffect(() => {
+    fetchTests();
+  }, []);
 
-    // Processing the text data into formatted array
-    // Expected Format per question: QuestionText | Opt0 | Opt1 | Opt2 | Opt3 | CorrectIdx
-    const lines = bulkText.split("\n").map(l => l.trim()).filter(Boolean);
-    const parsedQuestions = lines.map(line => {
-      const parts = line.split("|").map(p => p.trim());
-      if (parts.length < 6) return null;
-      return {
-        questionText: parts[0],
-        options: [parts[1], parts[2], parts[3], parts[4]],
-        correctOption: parseInt(parts[5], 10)
-      };
-    }).filter(Boolean);
+  const fetchTests = () => {
+    setLoading(true);
+    axios.get(`${API_BASE_URL}/api/mock-tests/all`)
+      .then(res => {
+        setTests(res.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  };
 
-    if (parsedQuestions.length === 0) {
-      setStatus({ loading: false, success: null, error: "🚨 કૃપા કરીને સાચા ફોર્મેટમાં પ્રશ્નો નાખો ભાઈ (Format: પ્રશ્ન | A | B | C | D | 0)" });
+  // Bulk JSON Import Action
+  const handleImportJson = async () => {
+    if (!bulkJson.trim()) {
+      setStatusMsg({ type: "error", text: "ભોગા ભાઈ! પેલા JSON ડેટા તો નાખો!" });
       return;
     }
 
-    const finalPayload = {
-      ...testDetails,
-      questions: parsedQuestions,
-      totalMarks: parsedQuestions.length
-    };
-
     try {
-      await axios.post(`${API_BASE_URL}/api/mock-tests/create`, finalPayload);
-      setStatus({ loading: false, success: `🎉 મોક ટેસ્ટ નંબર ${testDetails.testNumber} (કુલ ગુણ: ${parsedQuestions.length}) સફળતાપૂર્વક લાઈવ થઈ ગઈ ભાઈ!`, error: null });
-      setBulkText("");
+      const parsedData = JSON.parse(bulkJson);
+      const res = await axios.post(`${API_BASE_URL}/api/mock-tests/bulk-import`, parsedData);
+      
+      setStatusMsg({ type: "success", text: `સક્સેસફુલ! ૧૫૦ પ્રશ્નો વાળી ટેસ્ટ ધડાધડ અપલોડ થઈ ગઈ ભાઈ!` });
+      setBulkJson("");
+      fetchTests(); // Refresh the grid
     } catch (err) {
-      setStatus({ loading: false, success: null, error: err.response?.data?.error || "ડેટા સેવ કરવામાં ભૂલ થઈ." });
+      console.error(err);
+      setStatusMsg({ type: "error", text: "JSON ફોર્મેટમાં કંઈક લોચો છે, બરાબર ચેક કરો ભાઈ!" });
+    }
+  };
+
+  // Delete Test Action
+  const handleDeleteTest = async (id) => {
+    if (!window.confirm("ખરેખર આ મોક ટેસ્ટ ડીલીટ કરવી છે ભાઈ?")) return;
+    
+    try {
+      await axios.delete(`${API_BASE_URL}/api/mock-tests/${id}`);
+      setStatusMsg({ type: "success", text: "ટેસ્ટ સક્સેસફુલ ડીલીટ થઈ ગઈ!" });
+      fetchTests();
+    } catch (err) {
+      setStatusMsg({ type: "error", text: "ડીલીટ કરવામાં ભૂલ થઈ!" });
     }
   };
 
   return (
     <div style={{ backgroundColor: "#09090b", color: "#f4f4f5", minHeight: "100vh", padding: "40px 24px", fontFamily: "sans-serif" }}>
-      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
         
-        {/* Header Title */}
+        {/* Title Header */}
         <div style={{ borderBottom: "1px solid #27272a", paddingBottom: "20px", marginBottom: "30px" }}>
-          <h1 style={{ margin: 0, background: "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            👑 MOCK TEST BULK ARCHITECT
-          </h1>
-          <p style={{ color: "#a1a1aa", fontSize: "13px", margin: "6px 0 0 0" }}>MIDNIGHT CYBER GOLD AUTOLOAD SYSTEM</p>
+          <h1 style={{ margin: 0, fontSize: "28px", color: "#fff" }}>🛠️ મોક ટેસ્ટ એડમિન કંટ્રોલ પેનલ</h1>
+          <p style={{ color: "#FFE07D", margin: "6px 0 0 0", fontSize: "14px", fontWeight: "bold" }}>👑 @missiontatgujrat સિક્રેટ ડેશબોર્ડ</p>
         </div>
 
-        {status.success && <div style={{ background: "rgba(22,163,74,0.15)", border: "1px solid #16a34a", color: "#22c55e", padding: "14px", borderRadius: "12px", marginBottom: "20px" }}>{status.success}</div>}
-        {status.error && <div style={{ background: "rgba(220,38,38,0.15)", border: "1px solid #dc2626", color: "#ef4444", padding: "14px", borderRadius: "12px", marginBottom: "20px" }}>{status.error}</div>}
+        {/* Alerts Box */}
+        {statusMsg.text && (
+          <div style={{ padding: "16px", borderRadius: "12px", marginBottom: "24px", backgroundColor: statusMsg.type === "success" ? "rgba(74,222,128,0.1)" : "rgba(239,68,68,0.1)", border: statusMsg.type === "success" ? "1px solid #4ade80" : "1px solid #ef4444", color: statusMsg.type === "success" ? "#4ade80" : "#ef4444", fontWeight: "bold" }}>
+            {statusMsg.text}
+          </div>
+        )}
 
-        <form onSubmit={handlePublish} style={{ backgroundColor: "#1c1c1e", padding: "30px", borderRadius: "24px", display: "flex", flexDirection: "column", gap: "20px", border: "1px solid #27272a" }}>
+        {/* Main Split Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px" }}>
           
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
-            <div>
-              <label style={{ fontSize: "13px", color: "#a1a1aa", display: "block", marginBottom: "6px" }}>🎯 પરીક્ષાનો પ્રકાર પસંદ કરો:</label>
-              <select value={testDetails.examType} onChange={(e) => setTestDetails({...testDetails, examType: e.target.value})} style={{ width: "100%", background: "#09090b", border: "1px solid #27272a", padding: "12px", color: "#fff", borderRadius: "10px" }}>
-                <option value="TET_1">TET 1 (ધોરણ 1 થી 5)</option>
-                <option value="TET_2_MATHS">TET 2 - ગણિત / વિજ્ઞાન</option>
-                <option value="TET_2_SS">TET 2 - સામાજિક વિજ્ઞાન</option>
-                <option value="TET_2_LANG">TET 2 - ભાષાઓ</option>
-              </select>
-            </div>
+          {/* Left Column: Bulk JSON Box */}
+          <div style={{ backgroundColor: "#1c1c1e", border: "1px solid #27272a", padding: "24px", borderRadius: "20px" }}>
+            <h3 style={{ margin: "0 0 12px 0", color: "#fff" }}>📥 બલ્ક મોક ટેસ્ટ ઇમ્પોર્ટર</h3>
+            <p style={{ color: "#a1a1aa", fontSize: "13px", marginBottom: "16px" }}>તમારો આખો પ્રશ્નપત્રનો JSON ડેટા નીચેના બોક્સમાં પેસ્ટ કરો:</p>
             
-            <div>
-              <label style={{ fontSize: "13px", color: "#a1a1aa", display: "block", marginBottom: "6px" }}>🔢 ટેસ્ટ નંબર (1 થી 50):</label>
-              <input type="number" required value={testDetails.testNumber} onChange={(e) => setTestDetails({...testDetails, testNumber: e.target.value})} style={{ width: "100%", background: "#09090b", border: "1px solid #27272a", padding: "12px", color: "#fff", borderRadius: "10px" }} />
-            </div>
-          </div>
-
-          <input type="text" placeholder="ટેસ્ટ ટાઇટલ (દા.ત. ગણિત-વિજ્ઞાન સુપર મોક ટેસ્ટ - 01)" required value={testDetails.title} onChange={(e) => setTestDetails({...testDetails, title: e.target.value})} style={{ background: "#09090b", border: "1px solid #27272a", padding: "12px", color: "#fff", borderRadius: "10px" }} />
-          <textarea placeholder="ટેસ્ટ વિશે ડિસ્ક્રિપ્શન (Description)" rows="2" value={testDetails.description} onChange={(e) => setTestDetails({...testDetails, description: e.target.value})} style={{ background: "#09090b", border: "1px solid #27272a", padding: "12px", color: "#fff", borderRadius: "10px" }} />
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
-            <div>
-              <label style={{ fontSize: "13px", color: "#a1a1aa", display: "block", marginBottom: "6px" }}>⏱️ સમય અવધિ (મિનિટ):</label>
-              <input type="number" value={testDetails.duration} onChange={(e) => setTestDetails({...testDetails, duration: e.target.value})} style={{ width: "100%", background: "#09090b", border: "1px solid #27272a", padding: "12px", color: "#fff", borderRadius: "10px" }} />
-            </div>
-            <div>
-              <label style={{ fontSize: "13px", color: "#a1a1aa", display: "block", marginBottom: "6px" }}>🔓 એક્સેસ પ્રકાર:</label>
-              <select value={testDetails.isPaid ? "true" : "false"} onChange={(e) => setTestDetails({...testDetails, isPaid: e.target.value === "true"})} style={{ width: "100%", background: "#09090b", border: "1px solid #27272a", padding: "12px", color: "#fff", borderRadius: "10px" }}>
-                <option value="false">Free (ટ્રાયલ માટે)</option>
-                <option value="true">Premium Plan (🔒 ₹49 Unlimited)</option>
-              </select>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "13px", color: "#FFE07D", fontWeight: "bold" }}>🤖 AI / Excel બલ્ક ઇમ્પોર્ટર બોક્સ:</label>
-            <p style={{ margin: "0 0 6px 0", color: "#71717a", fontSize: "11px" }}>ફોર્મેટ: પ્રશ્ન લખાણ | ઓપ્શન A | ઓપ્શન B | ઓપ્શન C | ઓપ્શન D | સાચો ઇન્ડેક્સ (0=A, 1=B, 2=C, 3=D)</p>
-            <textarea 
+            <textarea
               rows="12"
-              placeholder="ભારતનું પાટનગર કયું છે? | મુંબઈ | દિલ્હી | ચેન્નાઈ | કોલકાતા | 1&#10;બીજો પ્રશ્ન અહીં... | A | B | C | D | 0"
-              required 
-              value={bulkText} 
-              onChange={(e) => setBulkText(e.target.value)} 
-              style={{ background: "#09090b", border: "1px solid #27272a", padding: "14px", color: "#a3e635", borderRadius: "12px", fontFamily: "monospace", fontSize: "12px", lineHeight: "1.6" }} 
+              value={bulkJson}
+              onChange={(e) => setBulkJson(e.target.value)}
+              placeholder='{ "title": "ગણિત મોક ટેસ્ટ - 01", "duration": 120, "questions": [...] }'
+              style={{ width: "100%", backgroundColor: "#09090b", border: "1px solid #27272a", borderRadius: "12px", padding: "14px", color: "#FFE07D", fontFamily: "monospace", fontSize: "13px", resize: "vertical" }}
             />
+            
+            <button
+              onClick={handleImportJson}
+              style={{ width: "100%", marginTop: "16px", background: "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)", color: "#000", border: "none", padding: "14px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", fontSize: "15px" }}
+            >
+              🚀 ટેસ્ટ લાઈવ પબ્લિશ કરો
+            </button>
           </div>
 
-          <button type="submit" disabled={status.loading} style={{ background: "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)", color: "#000", padding: "14px", borderRadius: "12px", border: "none", fontWeight: "bold", cursor: "pointer", fontSize: "15px", letterSpacing: "0.5px" }}>
-            {status.loading ? "⚙️ પ્રોસેસિંગ અને ઓટો-સેવિંગ..." : "🚀 મોક ટેસ્ટ લાઈવ કરો"}
-          </button>
-        </form>
+          {/* Right Column: Active Tests List Management */}
+          <div style={{ backgroundColor: "#1c1c1e", border: "1px solid #27272a", padding: "24px", borderRadius: "20px" }}>
+            <h3 style={{ margin: "0 0 16px 0", color: "#fff" }}>📋 હાલની ચાલુ મોક ટેસ્ટ્સ ({tests.length})</h3>
+            
+            {loading ? (
+              <div style={{ color: "#FFE07D" }}>ટેસ્ટ લિસ્ટ લોડ થઈ રહ્યું છે...</div>
+            ) : tests.length === 0 ? (
+              <div style={{ color: "#71717a" }}>પોર્ટલ પર હજી સુધી એક પણ ટેસ્ટ અપલોડ નથી થઈ ભાઈ.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "420px", overflowY: "auto", paddingRight: "4px" }}>
+                {tests.map((test) => (
+                  <div key={test.id} style={{ backgroundColor: "#09090b", border: "1px solid #27272a", padding: "16px", borderRadius: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <h4 style={{ margin: 0, color: "#fff", fontSize: "16px" }}>{test.title}</h4>
+                      <div style={{ display: "flex", gap: "12px", marginTop: "6px", fontSize: "12px", color: "#a1a1aa" }}>
+                        <span>⏱️ {test.duration} મિ.</span>
+                        <span>❓ Qs: {test.questions?.length || 0}</span>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => handleDeleteTest(test.id)}
+                      style={{ backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid #ef4444", padding: "8px 12px", borderRadius: "8px", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}
+                    >
+                      🗑️ ડીલીટ
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+
       </div>
     </div>
   );
