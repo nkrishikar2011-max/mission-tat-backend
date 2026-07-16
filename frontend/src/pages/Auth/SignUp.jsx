@@ -1,7 +1,10 @@
 // frontend/src/pages/Auth/SignUp.jsx
-// (Taddan navi file - High-Security Encrypted Registration Layout)
+// (FARJIYAT AKHI FILE REPLACE - Live Firebase Cloud Sign-Up Architecture)
 
 import React, { useState } from "react";
+import { auth, db } from "../../firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function SignUp() {
   const [mobileNumber, setMobileNumber] = useState("");
@@ -32,27 +35,35 @@ export default function SignUp() {
         return;
       }
 
-      // 🔐 HIGH-SECURITY LOCAL ENCRYPTION SHIELD
-      // પ્લેન ટેક્સ્ટ પાસવર્ડ સેવ કરવાના બદલે આપણે એને બેઝ-૬૪ સિક્યોર માસ્કિંગમાં કન્વર્ટ કરીશું
-      const maskedPassword = btoa(password);
-      
+      // 🔐 FIREBASE CLOUD MASQUERADE LAYER
+      // મોબાઈલ નંબરને ફાયરબેઝ ઓથ માટે સિક્યોર વર્ચ્યુઅલ ડોમેઈનમાં કન્વર્ટ કરો
+      const secureEmail = `${mobileNumber}@missiontat.com`;
+
+      // 1. Firebase Authentication માં યુઝર ક્રિએટ કરો (પાસવર્ડ ઓટો-હેશ થઈ જશે)
+      const userCredential = await createUserWithEmailAndPassword(auth, secureEmail, password);
+      const user = userCredential.user;
+
+      // 2. Firebase Cloud Firestore માં શિક્ષક પ્રોફાઈલનો ડેટા સેવ કરો
       const userData = {
-        id: "usr_" + Date.now(),
+        uid: user.uid,
         mobile: mobileNumber,
-        secretToken: maskedPassword,
         role: "teacher",
-        xp: 0
+        createdAt: new Date().toISOString(),
+        premiumStatus: false
       };
 
-      // લોકલ ડેટાબેઝ સેન્ડબોક્સમાં સિક્યોરલી સ્ટોર કરો
-      localStorage.setItem(`mission_tat_auth_${mobileNumber}`, JSON.stringify(userData));
+      await setDoc(doc(db, "users", user.uid), userData);
 
-      alert("🎉 રજીસ્ટ્રેશન સફળ થયું ભાઈ! હવે તમે લોગિન કરી શકો છો.");
+      alert("🎉 ફાયરબેઝ ક્લાઉડ રજીસ્ટ્રેશન સફળ! પાસવર્ડ મિલિટરી ગ્રેડ સિક્યોર થઈ ગયો છે ભાઈ.");
       window.location.href = "/login";
 
     } catch (err) {
-      console.error("Secure registration broken:", err);
-      alert("❌ સાઈન-અપ પ્રોસેસમાં કોઈ ખામી આવી ભાઈ!");
+      console.error("Firebase SignUp Engine Error:", err);
+      if (err.code === "auth/email-already-in-use") {
+        alert("❌ આ મોબાઈલ નંબર પર એકાઉન્ટ ઓલરેડી બનેલું છે ભાઈ!");
+      } else {
+        alert(`❌ સાઈન-અપ ફેઈલ: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -64,7 +75,7 @@ export default function SignUp() {
         
         <span style={{ fontSize: "38px" }}>📝</span>
         <h2 style={{ margin: "12px 0 6px 0", fontSize: "24px", color: "#2f3640", fontWeight: "bold" }}>નવું એકાઉન્ટ બનાવો</h2>
-        <p style={{ color: "#7f8c8d", fontSize: "13px", margin: "0 0 30px 0" }}>મિશન TAT ગુજરાત સિક્યોર સાઈન-અપ</p>
+        <p style={{ color: "#7f8c8d", fontSize: "13px", margin: "0 0 30px 0" }}>મિશન TAT ગુજરાત સિક્યોર ક્લાઉડ સાઈન-અપ</p>
 
         <form onSubmit={handleSignUpSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px", textAlign: "left" }}>
           
@@ -110,7 +121,7 @@ export default function SignUp() {
             disabled={loading}
             style={{ width: "100%", background: "#27ae60", color: "#ffffff", border: "none", padding: "14px", borderRadius: "12px", fontWeight: "bold", fontSize: "15px", cursor: "pointer", marginTop: "10px" }}
           >
-            {loading ? "⚙️ પ્રોસેસિંગ..." : "એકાઉન્ટ એક્ટિવેટ કરો 🤝"}
+            {loading ? "⚙️ ક્લાઉડ સિંકિંગ..." : "ક્લાઉડ એકાઉન્ટ એક્ટિવેટ કરો 🤝"}
           </button>
 
         </form>
