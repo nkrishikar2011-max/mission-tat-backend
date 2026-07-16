@@ -1,5 +1,5 @@
 // backend/server.js
-// (FARJIYAT AKHI FILE REPLACE - Original Systems Safe + Razorpay Key Matrix Fixed)
+// (FARJIYAT AKHI FILE REPLACE - Core Store Safe + Razorpay Response Identifier Sync)
 
 import express from "express";
 import cors from "cors";
@@ -41,7 +41,6 @@ app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use("/api/mock-tests", mockTestRoutes);
 
 // ================= RAZORPAY CONFIG =================
-// ફિક્સ: લોકલ મોડમાં 481 અનઅોથોરાઈઝ્ડ એરર તોડવા માટે એન્વાયરમેન્ટ ચેક સેટ કર્યો
 const RAZORPAY_KEY_ID = "rzp_test_5M8UBrwvserR8o";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET && process.env.RAZORPAY_KEY_SECRET !== "dummy_secret" 
   ? process.env.RAZORPAY_KEY_SECRET 
@@ -133,14 +132,15 @@ app.post("/api/payments/create-order", async (req, res) => {
     const { userId, amount } = req.body;
     if (!userId) return res.status(400).json({ success: false, message: "User ID missing" });
 
-    // લોકલ ટેસ્ટ મોડ માટે ઓર્ડર આઈડી ઓટોમેશન ફિક્સ
+    // લોકલ ડમી મોડ ઓટોમેશન
     if (RAZORPAY_KEY_SECRET === "dummy_secret") {
       return res.status(200).json({
         id: `order_mock_${Date.now()}`,
         entity: "order",
         amount: Math.round(Number(amount) * 100),
         currency: "INR",
-        receipt: `mock_test_rcpt_${Date.now()}`
+        receipt: `mock_test_rcpt_${Date.now()}`,
+        keyId: RAZORPAY_KEY_ID // ફિક્સ: કી પ્રોવાઇડર પેલોડ એડ કર્યો
       });
     }
 
@@ -151,7 +151,12 @@ app.post("/api/payments/create-order", async (req, res) => {
     };
 
     const order = await razorpay.orders.create(options);
-    res.status(200).json(order);
+    
+    // ફિક્સ: ઓરિજિનલ સ્ટોરની જેમ અહીં પણ keyId ઓબ્જેક્ટમાં મર્જ કરીને મોકલી
+    res.status(200).json({
+      ...order,
+      keyId: RAZORPAY_KEY_ID
+    });
   } catch (error) {
     console.error("Mock Test Payment Order Error:", error);
     res.status(500).json({ success: false, error: error.message });
@@ -162,7 +167,6 @@ app.post("/api/payments/verify", async (req, res) => {
   try {
     const { userId, razorpayPaymentId, razorpayOrderId, razorpaySignature } = req.body;
 
-    // જો બેકએન્ડ ડમી કી પર હોય, તો સિગ્નેચર ચેક બાયપાસ કરીને ટેસ્ટ સક્સેસ આપો
     if (RAZORPAY_KEY_SECRET === "dummy_secret" || !razorpaySignature) {
       const userRef = db.collection("users").doc(userId);
       const premiumPayload = { isPremium: true, premiumSubject: "TET_2_MATHS", updatedAt: new Date().toISOString() };
