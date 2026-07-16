@@ -1,24 +1,34 @@
 // frontend/src/pages/MockTest/ExamWindow.jsx
-// (Taddan navi file - Midnight Cyber Gold theme sathe live exam screen)
+// (FARJIYAT AKHI FILE REPLACE - Real Firebase Auth Connectivity Sathe Full Code)
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import { getAuth } from "firebase/auth";
 
 const API_BASE_URL = "https://mission-tat-backend.onrender.com";
 
 export default function ExamWindow() {
   const { testId } = useParams();
   const navigate = useNavigate();
+  const auth = getAuth();
+  const user = auth.currentUser; // Live Login user object
   
   const [test, setTest] = useState(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState({}); // { questionId: selectedOptionIndex }
-  const [timeLeft, setTimeLeft] = useState(7200); // 120 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(7200); // Default 120 minutes in seconds
   const [loading, setLoading] = useState(true);
 
   // Load Test Data
   useEffect(() => {
+    // જો યુઝર લોગિન ન હોય તો પહેલા જ અટકાવી દો
+    if (!user) {
+      alert("🚨 આ લાઈવ ટેસ્ટ આપવા માટે કૃપા કરીને પહેલા લોગિન કરો ભાઈ!");
+      navigate("/login");
+      return;
+    }
+
     axios.get(`${API_BASE_URL}/api/mock-tests/${testId}`)
       .then(res => {
         setTest(res.data);
@@ -29,9 +39,9 @@ export default function ExamWindow() {
         console.error(err);
         setLoading(false);
       });
-  }, [testId]);
+  }, [testId, user, navigate]);
 
-  // Live Countdown Timer
+  // Live Countdown Timer Engine
   useEffect(() => {
     if (timeLeft <= 0) {
       handleAutoSubmit();
@@ -57,9 +67,17 @@ export default function ExamWindow() {
   };
 
   const handleSubmit = async () => {
+    if (!user) {
+      alert("🚨 સેશન પૂરું થઈ ગયું છે, કૃપા કરીને ફરી લોગિન કરો!");
+      return;
+    }
+
     try {
-      const userId = "USER_FIREBASE_ID_TEMPORARY"; // Context mathi aavshe pachhi
-      const payload = { userId, testId, userAnswers: answers };
+      const payload = { 
+        userId: user.uid, // અસલી Firebase UID અહીં સેટ થઈ ગયું ભાઈ
+        testId, 
+        userAnswers: answers 
+      };
       const res = await axios.post(`${API_BASE_URL}/api/mock-tests/submit`, payload);
       navigate(`/mock-test/result/${res.data.attemptId}`);
     } catch (err) {
@@ -125,7 +143,7 @@ export default function ExamWindow() {
           </div>
         </div>
 
-        {/* Right Side: 150 Questions Matrix Palette */}
+        {/* Right Side: Questions Palette Matrix */}
         <div style={{ backgroundColor: "#1c1c1e", border: "1px solid #27272a", padding: "20px", borderRadius: "24px", height: "fit-content" }}>
           <h4 style={{ margin: "0 0 14px 0", color: "#fff", fontSize: "15px" }}>🎯 પ્રશ્નોની સ્થિતિ</h4>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", maxHeight: "350px", overflowY: "auto", paddingRight: "4px" }}>
