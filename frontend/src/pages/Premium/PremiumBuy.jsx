@@ -1,5 +1,5 @@
 // frontend/src/pages/Premium/PremiumBuy.jsx
-// (FARJIYAT AKHI FILE REPLACE - Razorpay Key Authentication Fix)
+// (FARJIYAT AKHI FILE REPLACE - Dynamic Server Key Fetch & Guard Integration)
 
 import React, { useState } from "react";
 import axios from "axios";
@@ -19,7 +19,7 @@ export default function PremiumBuy() {
     try {
       setLoading(true);
       
-      // 1. બેકએન્ડ પરથી Razorpay ઓર્ડર આઈડી જનરેટ કરો
+      // 1. બેકએન્ડ પરથી ઓર્ડર જનરેટ કરો
       const orderRes = await axios.post(`${API_BASE_URL}/api/payments/create-order`, {
         userId: userId,
         amount: 49
@@ -27,9 +27,26 @@ export default function PremiumBuy() {
 
       const orderData = orderRes.data;
 
-      // 2. Razorpay ચેકઆઉટ કોન્ફિગરેશન (ફિક્સ: બેકએન્ડ સાથે ૧૦૦% સેમ કી આઈડી સેટ કરી)
+      // લોકલ ટેસ્ટ મોડ ઓટોમેશન બાયપાસ
+      if (orderData.id && orderData.id.startsWith("order_mock_")) {
+        // જો બેકએન્ડ ડમી મોડમાં હોય, તો સીધું વેરિફિકેશન સિમ્યુલેટ કરો
+        const verifyRes = await axios.post(`${API_BASE_URL}/api/payments/verify`, {
+          userId: userId,
+          razorpayPaymentId: `pay_mock_${Date.now()}`,
+          razorpayOrderId: orderData.id,
+          razorpaySignature: ""
+        });
+
+        if (verifyRes.data.success) {
+          alert("👑 લોકલ ટેસ્ટ સક્સેસ! તમારો પ્રીમિયમ પાસ લોકલી એક્ટિવેટ થઈ ગયો છે ભાઈ.");
+          window.location.href = "/mock-test/dashboard";
+        }
+        return;
+      }
+
+      // 2. Razorpay ચેકઆઉટ કોન્ફિગરેશન (બેકએન્ડમાંથી જ ઓટોમેટિક કી પ્રોવાઇડ થશે)
       const options = {
-        key: "rzp_test_5M8UBrwvserR8o", 
+        key: orderData.keyId || "rzp_test_5M8UBrwvserR8o", 
         amount: orderData.amount,
         currency: orderData.currency,
         name: "MISSION TAT GUJARAT",
@@ -37,7 +54,7 @@ export default function PremiumBuy() {
         order_id: orderData.id,
         handler: async function (response) {
           try {
-            // 3. પેમેન્ટ વેરિફિકેશન એપીઆઈ કોલ
+            // 3. પેમેન્ટ વેરિફિકેશન
             const verifyRes = await axios.post(`${API_BASE_URL}/api/payments/verify`, {
               userId: userId,
               razorpayPaymentId: response.razorpay_payment_id,
