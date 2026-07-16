@@ -1,5 +1,5 @@
 // frontend/src/App.jsx
-// (FARJIYAT AKHI FILE REPLACE - Original Website Codes + Premium Mock Tests Integrated)
+// (FARJIYAT AKHI FILE REPLACE - Store + Mock Tests + Leaderboard + Admin Analytics All-in-One)
 
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
@@ -11,14 +11,18 @@ import Terms from "./pages/Legal/Terms";
 import Privacy from "./pages/Legal/Privacy";
 import Refund from "./pages/Legal/Refund";
 
-// New Premium Mock Test Module Pages Imports
+// Premium Mock Test Module Pages Imports
 import ExamWindow from "./pages/MockTest/ExamWindow";
 import TestResult from "./pages/MockTest/TestResult";
 import MockTestManager from "./pages/Admin/MockTestManager";
 import MockTestDashboard from "./pages/MockTest/Dashboard";
 import PremiumBuy from "./pages/Premium/PremiumBuy";
 
-// 🎬 NETFLIX-STYLE CINEMATIC SPLASH COMPONENT (સાઇટને રોમાંચક બનાવવા માટે)
+// New Core Pages Imports (Leaderboard & Admin Logs Analytics)
+import Leaderboard from "./pages/MockTest/Leaderboard";
+import AdminAnalytics from "./pages/Admin/AdminAnalytics";
+
+// 🎬 NETFLIX-STYLE CINEMATIC SPLASH COMPONENT
 function SplashScreen({ onFinished }) {
   useEffect(() => {
     const timer = setTimeout(() => { onFinished(); }, 4500);
@@ -70,11 +74,17 @@ export default function App() {
         <Route path="/store" element={<Store />} />
         <Route path="/admin" element={<AdminDashboard />} />
 
-        {/* પ્રીમિયમ મોક ટેસ્ટ અને એડમિન પેનલ ઓટોમેશન Routes */}
+        {/* પ્રીમિયમ મોક ટેસ્ટ પોર્ટલ Routes */}
         <Route path="/mock-test/dashboard" element={<MockTestDashboard />} />
         <Route path="/mock-test/live/:testId" element={<ExamWindow />} />
         <Route path="/mock-test/result/:attemptId" element={<TestResult />} />
+        
+        {/* ઓલ ગુજરાત લાઈવ મેરિટ લિસ્ટ (Leaderboard) Route */}
+        <Route path="/mock-test/leaderboard" element={<Leaderboard />} />
+
+        {/* એડમિન મોક ટેસ્ટ કંટ્રોલ અને રીયલ-ટાઇમ એનાલિટિક્સ લોગ્સ */}
         <Route path="/admin/manage-mock-tests" element={<MockTestManager />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
         
         {/* Razorpay સિક્યોર ગેટવે પેજ */}
         <Route path="/premium-buy" element={<PremiumBuy />} />
