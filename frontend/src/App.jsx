@@ -1,14 +1,23 @@
+// frontend/src/App.jsx
+// (FARJIYAT AKHI FILE REPLACE - Original Website Codes + Premium Mock Tests Integrated)
+
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+
+// Existing Original Pages Imports
 import Store from "./pages/Store/Store";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Terms from "./pages/Legal/Terms";
 import Privacy from "./pages/Legal/Privacy";
 import Refund from "./pages/Legal/Refund";
+
+// New Premium Mock Test Module Pages Imports
 import ExamWindow from "./pages/MockTest/ExamWindow";
 import TestResult from "./pages/MockTest/TestResult";
 import MockTestManager from "./pages/Admin/MockTestManager";
 import MockTestDashboard from "./pages/MockTest/Dashboard";
+import PremiumBuy from "./pages/Premium/PremiumBuy";
+
 // 🎬 NETFLIX-STYLE CINEMATIC SPLASH COMPONENT (સાઇટને રોમાંચક બનાવવા માટે)
 function SplashScreen({ onFinished }) {
   useEffect(() => {
@@ -56,13 +65,20 @@ export default function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/refund" element={<Refund />} />
-        <Route path="/mock-test/dashboard" element={<MockTestDashboard />} />
+        
         {/* મેઈન સ્ટોર અને એડમિન ડેશબોર્ડ */}
         <Route path="/store" element={<Store />} />
         <Route path="/admin" element={<AdminDashboard />} />
+
+        {/* પ્રીમિયમ મોક ટેસ્ટ અને એડમિન પેનલ ઓટોમેશન Routes */}
+        <Route path="/mock-test/dashboard" element={<MockTestDashboard />} />
+        <Route path="/mock-test/live/:testId" element={<ExamWindow />} />
+        <Route path="/mock-test/result/:attemptId" element={<TestResult />} />
         <Route path="/admin/manage-mock-tests" element={<MockTestManager />} />
-<Route path="/mock-test/live/:testId" element={<ExamWindow />} />
-<Route path="/mock-test/result/:attemptId" element={<TestResult />} />
+        
+        {/* Razorpay સિક્યોર ગેટવે પેજ */}
+        <Route path="/premium-buy" element={<PremiumBuy />} />
+
         {/* ડાયરેક્ટ સ્ટોર પેજ પર રીડાયરેક્ટ */}
         <Route path="*" element={<Navigate to="/store" replace />} />
       </Routes>
