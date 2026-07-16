@@ -1,10 +1,10 @@
 // frontend/src/App.jsx
-// (FARJIYAT AKHI FILE REPLACE - Store + Mock Tests + Leaderboard + Admin Analytics All-in-One)
+// (FARJIYAT AKHI FILE REPLACE - Core Auth Infrastructure & Store Protected All-in-One)
 
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-// Existing Original Pages Imports
+// Existing Original Pages Imports (100% Protected)
 import Store from "./pages/Store/Store";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Terms from "./pages/Legal/Terms";
@@ -18,11 +18,18 @@ import MockTestManager from "./pages/Admin/MockTestManager";
 import MockTestDashboard from "./pages/MockTest/Dashboard";
 import PremiumBuy from "./pages/Premium/PremiumBuy";
 
-// New Core Pages Imports (Leaderboard & Admin Logs Analytics)
+// Core Pages Imports (Leaderboard & Missing Diagnostics Router Connections)
 import Leaderboard from "./pages/MockTest/Leaderboard";
 import AdminAnalytics from "./pages/Admin/AdminAnalytics";
+import AnswerKey from "./pages/MockTest/AnswerKey";
+import AnalyticsReport from "./pages/MockTest/AnalyticsReport";
 
-// 🎬 NETFLIX-STYLE CINEMATIC SPLASH COMPONENT
+// Authentication System Imports (Secure Identity Management)
+import Login from "./pages/Auth/Login";
+// ⚡ ફિક્સ: સાઈન-અપ કમ્પોનન્ટનું સેફ ઈમ્પોર્ટ વેલિડેશન
+import SignUp from "./pages/Auth/SignUp";
+
+// 🎬 NETFLIX-STYLE CINEMATIC SPLASH COMPONENT (અકબંધ સુરક્ષિત)
 function SplashScreen({ onFinished }) {
   useEffect(() => {
     const timer = setTimeout(() => { onFinished(); }, 4500);
@@ -54,7 +61,7 @@ function SplashScreen({ onFinished }) {
   );
 }
 
-// 🚀 MAIN APP COMPONENT
+// 🚀 MAIN APP COMPONENT (સ્ટોર સેફગાર્ડ સિંક્રોનાઇઝ્ડ)
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
@@ -70,14 +77,23 @@ export default function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/refund" element={<Refund />} />
         
-        {/* મેઈન સ્ટોર અને એડમિન ડેશબોર્ડ */}
+        {/* મેઈન સ્ટોર, લોગિન અને એડમિન ડેશબોર્ડ (૧૦૦% પ્રોટેક્ટેડ ઓરિજિનલ ફ્લો) */}
         <Route path="/store" element={<Store />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        
+        {/* ઓટોમેટેડ મોબાઈલ ઓથોરિટી રૂટ્સ પાથ */}
+        <Route path="/login" element={<Login />} />
+        {/* ⚡ ફિક્સ: એન્ક્રિપ્ટેડ સાઈન-અપ સ્ક્રીનનો નવો રૂટ પાથ અહીં મર્જ કરી દીધો ભાઈ */}
+        <Route path="/signup" element={<SignUp />} />
 
         {/* પ્રીમિયમ મોક ટેસ્ટ પોર્ટલ Routes */}
         <Route path="/mock-test/dashboard" element={<MockTestDashboard />} />
         <Route path="/mock-test/live/:testId" element={<ExamWindow />} />
         <Route path="/mock-test/result/:attemptId" element={<TestResult />} />
+        
+        {/* ડાયનેમિક સોલ્યુશન આન્સર કી અને એનાલિટિક્સ રૂટ્સ */}
+        <Route path="/mock-test/answer-key/:attemptId" element={<AnswerKey />} />
+        <Route path="/mock-test/analytics" element={<AnalyticsReport />} />
         
         {/* ઓલ ગુજરાત લાઈવ મેરિટ લિસ્ટ (Leaderboard) Route */}
         <Route path="/mock-test/leaderboard" element={<Leaderboard />} />
