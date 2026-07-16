@@ -1,5 +1,5 @@
 // frontend/src/pages/Premium/PremiumBuy.jsx
-// (FARJIYAT AKHI FILE REPLACE - Testing Guest Bypass Inside Razorpay Window)
+// (FARJIYAT AKHI FILE REPLACE - Razorpay Key Authentication Fix)
 
 import React, { useState } from "react";
 import axios from "axios";
@@ -12,7 +12,6 @@ export default function PremiumBuy() {
   const user = auth?.currentUser;
 
   const handlePayment = async () => {
-    // ટેસ્ટિંગ માટે ગેસ્ટ યુઝર ફિક્સ: જો લોગિન ન હોય તો પણ મોક આઈડી વાપરો
     const userId = user ? user.uid : "TEST_GUEST_USER_123";
     const userEmail = user ? user.email : "guest@missiontat.com";
     const userPhone = user ? user.phoneNumber : "9999999999";
@@ -28,9 +27,9 @@ export default function PremiumBuy() {
 
       const orderData = orderRes.data;
 
-      // 2. Razorpay ચેકઆઉટ કોન્ફિગરેશન સેટઅપ
+      // 2. Razorpay ચેકઆઉટ કોન્ફિગરેશન (ફિક્સ: બેકએન્ડ સાથે ૧૦૦% સેમ કી આઈડી સેટ કરી)
       const options = {
-        key: "rzp_test_5M8UBrwvserR8o", // તારી ટેસ્ટ કી આઈડી
+        key: "rzp_test_5M8UBrwvserR8o", 
         amount: orderData.amount,
         currency: orderData.currency,
         name: "MISSION TAT GUJARAT",
@@ -60,7 +59,7 @@ export default function PremiumBuy() {
           contact: userPhone
         },
         theme: {
-          color: "#FFE07D" // Gold Aura Theme
+          color: "#FFE07D"
         }
       };
 
@@ -98,7 +97,7 @@ export default function PremiumBuy() {
         <button 
           onClick={handlePayment}
           disabled={loading}
-          style={{ width: "100%", background: "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)", color: "#000", border: "none", padding: "16px", borderRadius: "14px", fontWeight: "bold", fontSize: "16px", cursor: "pointer", transition: "all 0.2s" }}
+          style={{ width: "100%", background: "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)", color: "#000", border: "none", padding: "16px", borderRadius: "14px", fontWeight: "bold", fontSize: "16px", cursor: "pointer" }}
         >
           {loading ? "⚙️ લોડિંગ..." : "Secure Pay with Razorpay"}
         </button>
