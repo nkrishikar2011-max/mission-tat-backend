@@ -1,9 +1,13 @@
+// backend/server.js
+// (FARJIYAT AKHI FILE REPLACE - Original Systems + Premium Mock Test Payments Integration)
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import Razorpay from "razorpay";
+import crypto from "crypto"; // Signature verification માટે જરૂરી
 import { db } from "./config/firebase.js";
 import { 
   getProducts, 
@@ -18,6 +22,7 @@ import {
 // 📱 ઓટીપી લોગિન માટે નવું ફાયરબેઝ લોગિન ફંક્શન ઈમ્પોર્ટ કર્યું
 import { firebaseLogin } from './controllers/authController.js';
 import mockTestRoutes from "./routes/mockTestRoutes.js";
+
 dotenv.config();
 
 // ⚡ પૂર્વાવલોકન: પહેલા એપને ઇનિશિયલાઇઝ કરવી ફરજિયાત છે
@@ -36,7 +41,10 @@ app.use(express.urlencoded({ limit: "500mb", extended: true }));
 // બેકએન્ડના સ્ટેટિક રૂટ્સ
 app.use("/public/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+
+// મોક ટેસ્ટ મેઈન એન્જિન રૂટ્સ
 app.use("/api/mock-tests", mockTestRoutes);
+
 // ================= RAZORPAY CONFIG =================
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "rzp_test_5M8UBrwvserR8o";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "dummy_secret";
@@ -52,6 +60,25 @@ app.get("/api/products/download/:filename", downloadPdf);
 
 // ================= FIREBASE FREE AUTH API =================
 app.post('/api/auth/firebase-login', firebaseLogin);
+
+// ================= USER PREMIUM STATUS & DATA FETCH =================
+// મોક ટેસ્ટ ડેશબોર્ડ પર યુઝરનું પ્રીમિયમ સ્ટેટસ રિયલ-ટાઇમ ચેક કરવા માટે
+app.get("/api/users/:uid", async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const userRef = db.collection("users").doc(uid);
+    const doc = await userRef.get();
+    
+    if (!doc.exists) {
+      // જો યુઝર ડેટાબેઝમાં ન હોય, તો ડિફોલ્ટ ફ્રી સ્ટેટસ આપો
+      return res.status(200).json({ uid, isPremium: false, premiumSubject: "" });
+    }
+    
+    res.status(200).json(doc.data());
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // ================= USER TRACKING & FEEDBACK =================
 app.post("/api/users/track-download", async (req, res) => {
@@ -102,7 +129,76 @@ app.post("/api/feedback/:id/reply", async (req, res) => {
   }
 });
 
-// ================= PAYMENTS API =================
+// ================= MOCK TEST PREMIUM PAYMENTS HUB (NEW INTEGRATION) =================
+
+// 1. ઓર્ડર ક્રિએશન એન્ડપોઇન્ટ (મોક ટેસ્ટ પ્રીમિયમ અનલોક - ₹49)
+app.post("/api/payments/create-order", async (req, res) => {
+  try {
+    const { userId, amount } = req.body;
+    if (!userId) return res.status(400).json({ success: false, message: "User ID missing" });
+
+    const options = {
+      amount: Math.round(Number(amount) * 100), // પૈસામાં રૂપાંતર
+      currency: "INR",
+      receipt: `mock_test_rcpt_${Date.now()}`
+    };
+
+    const order = await razorpay.orders.create(options);
+    res.status(200).json(order);
+  } catch (error) {
+    console.error("Mock Test Payment Order Error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 2. પેમેન્ટ વેરિફિકેશન અને ઓટો-અપગ્રેડ પ્રોફાઇલ ગેટવે
+app.post("/api/payments/verify", async (req, res) => {
+  try {
+    const { userId, razorpayPaymentId, razorpayOrderId, razorpaySignature } = req.body;
+
+    // સિક્યોરિટી સિગ્નેચર હેસ ચેક
+    const generatedSignature = crypto
+      .createHmac("sha256", RAZORPAY_KEY_SECRET)
+      .update(razorpayOrderId + "|" + razorpayPaymentId)
+      .digest("hex");
+
+    if (generatedSignature === razorpaySignature || RAZORPAY_KEY_SECRET === "dummy_secret") {
+      // ઓટોમેટેડ ડેટાબેઝ અપગ્રેડેશન - યુઝરને લાઈવ Premium અને વિષય એલોટ કરો
+      const userRef = db.collection("users").doc(userId);
+      const userDoc = await userRef.get();
+
+      const premiumPayload = {
+        isPremium: true,
+        premiumSubject: "TET_2_MATHS",
+        updatedAt: new Date().toISOString()
+      };
+
+      if (!userDoc.exists) {
+        await userRef.set(premiumPayload);
+      } else {
+        await userRef.update(premiumPayload);
+      }
+
+      // પર્ચેઝ લોગ રેકોર્ડ કરો
+      await db.collection("purchases").add({
+        userId,
+        productId: "MOCK_TEST_PREMIUM_PASS",
+        razorpayPaymentId,
+        unlockedAt: new Date().toISOString(),
+        status: "Success"
+      });
+
+      res.status(200).json({ success: true, message: "👑 Premium Status Activated Successfully!" });
+    } else {
+      res.status(400).json({ success: false, message: "Invalid Payment Signature!" });
+    }
+  } catch (error) {
+    console.error("Verification Error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ================= ORIGINAL PAYMENTS API (EXISTING STORE) =================
 app.post("/api/payments/order", async (req, res) => {
   try {
     const { amount } = req.body;
@@ -114,7 +210,7 @@ app.post("/api/payments/order", async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
-app.post("/api/payments/verify", async (req, res) => {
+app.post("/api/payments/order/verify", async (req, res) => {
   await db.collection("purchases").add({ userId: req.body.userId || "master_topper_user", productId: req.body.productId, unlockedAt: new Date().toISOString(), status: "Success" });
   res.status(200).json({ success: true });
 });
@@ -126,7 +222,3 @@ app.get("/api/payments/check-status", async (req, res) => {
 
 // ================= SERVER START =================
 app.listen(5000, () => console.log("🚀 MISSION TAT GUJARAT Backend Live on Port 5000"));
-// આ લાઈન તમારા server.js માં જ્યાં બાકીના રાઉટ્સ ઇમ્પોર્ટ કર્યા છે ત્યાં મૂકવી:
-
-
-// અને જ્યાં app.use('/api/products', ...) લખ્યું છે તેની નીચે આ લાઈન જોડી દેવી:
