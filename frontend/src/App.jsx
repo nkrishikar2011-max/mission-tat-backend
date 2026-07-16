@@ -8,6 +8,7 @@ import Refund from "./pages/Legal/Refund";
 import ExamWindow from "./pages/MockTest/ExamWindow";
 import TestResult from "./pages/MockTest/TestResult";
 import MockTestManager from "./pages/Admin/MockTestManager";
+import MockTestDashboard from "./pages/MockTest/Dashboard";
 // 🎬 NETFLIX-STYLE CINEMATIC SPLASH COMPONENT (સાઇટને રોમાંચક બનાવવા માટે)
 function SplashScreen({ onFinished }) {
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/refund" element={<Refund />} />
-        
+        <Route path="/mock-test/dashboard" element={<MockTestDashboard />} />
         {/* મેઈન સ્ટોર અને એડમિન ડેશબોર્ડ */}
         <Route path="/store" element={<Store />} />
         <Route path="/admin" element={<AdminDashboard />} />
