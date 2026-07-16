@@ -1,5 +1,5 @@
 // frontend/src/pages/Premium/PremiumBuy.jsx
-// (FARJIYAT AKHI FILE REPLACE - Dynamic Server Key Fetch & Guard Integration)
+// (FARJIYAT AKHI FILE REPLACE - Localhost Test Mode Shield Integration)
 
 import React, { useState } from "react";
 import axios from "axios";
@@ -13,8 +13,6 @@ export default function PremiumBuy() {
 
   const handlePayment = async () => {
     const userId = user ? user.uid : "TEST_GUEST_USER_123";
-    const userEmail = user ? user.email : "guest@missiontat.com";
-    const userPhone = user ? user.phoneNumber : "9999999999";
 
     try {
       setLoading(true);
@@ -27,9 +25,8 @@ export default function PremiumBuy() {
 
       const orderData = orderRes.data;
 
-      // લોકલ ટેસ્ટ મોડ ઓટોમેશન બાયપાસ
+      // ⚡ લોકલ ટેસ્ટિંગ ઓટોમેશન: જો આપણે લોકલ ડેવલપમેન્ટ મોડમાં હોઈએ, તો Razorpay ના લાઈવ નેટવર્ક પર જઈને 481 ક્રેશ લાવવાને બદલે સીધું જ વેરિફિકેશન સક્સેસ કરી દો!
       if (orderData.id && orderData.id.startsWith("order_mock_")) {
-        // જો બેકએન્ડ ડમી મોડમાં હોય, તો સીધું વેરિફિકેશન સિમ્યુલેટ કરો
         const verifyRes = await axios.post(`${API_BASE_URL}/api/payments/verify`, {
           userId: userId,
           razorpayPaymentId: `pay_mock_${Date.now()}`,
@@ -44,7 +41,7 @@ export default function PremiumBuy() {
         return;
       }
 
-      // 2. Razorpay ચેકઆઉટ કોન્ફિગરેશન (બેકએન્ડમાંથી જ ઓટોમેટિક કી પ્રોવાઇડ થશે)
+      // 2. લાઈવ પ્રોડક્શન કોન્ફિગરેશન (જ્યારે લાઈવ સર્વર પર અસલી કી મળશે ત્યારે આપોઆપ ચાલશે)
       const options = {
         key: orderData.keyId || "rzp_test_5M8UBrwvserR8o", 
         amount: orderData.amount,
@@ -54,7 +51,6 @@ export default function PremiumBuy() {
         order_id: orderData.id,
         handler: async function (response) {
           try {
-            // 3. પેમેન્ટ વેરિફિકેશન
             const verifyRes = await axios.post(`${API_BASE_URL}/api/payments/verify`, {
               userId: userId,
               razorpayPaymentId: response.razorpay_payment_id,
@@ -72,8 +68,8 @@ export default function PremiumBuy() {
         },
         prefill: {
           name: user?.displayName || "Guest Student",
-          email: userEmail,
-          contact: userPhone
+          email: user ? user.email : "guest@missiontat.com",
+          contact: user ? user.phoneNumber : "9999999999"
         },
         theme: {
           color: "#FFE07D"
@@ -101,7 +97,7 @@ export default function PremiumBuy() {
 
         <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: "14px", marginBottom: "35px", fontSize: "14px", color: "#e4e4e7" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}><span>✓</span> 150 પ્રશ્નો વાળી બધી જ VIP મોક ટેસ્ટ્સ</div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}><span>✓</span> ઇન્સ્ટન્ટ પેપર સોલ્યુશન અને એનાલિટિક્સ</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}><span>✓</span> ઇન્સ્ટન્ટ પેપર સોલ્યુશન અને એનાલิตિક્સ</div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}><span>✓</span> ડાયરેક્ટ PDF રિપોર્ટ ડાઉનલોડ ઓપ્શન</div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}><span>✓</span> ગોલ્ડન ઓરા પ્રોફાઇલ બેજ એક્ટિવેશન</div>
         </div>
