@@ -1,5 +1,5 @@
 // frontend/src/pages/MockTest/Dashboard.jsx
-// (FARJIYAT AKHI FILE REPLACE - Multi-Stage Lock/Unlock Comfort Layout Engine)
+// (FARJIYAT AKHI FILE REPLACE - Full 150 Questions Free/Paid Test Engine)
 
 import React, { useState, useEffect } from "react";
 
@@ -43,7 +43,7 @@ export default function MockTestDashboard() {
 
   const isCurrentPackageUnlocked = checkUnlockStatus();
 
-  // 📝 ડાયનેમિક ૫૦ મોક ટેસ્ટ જનરેટર (૨ ફ્રી + ૪૮ પેઇડ)
+  // 📝 ડાયનેમિક ૫૦ મોક ટેસ્ટ જનરેટર (૨ ਫ੍ਰੀ + ૪૮ પેઇડ - બધી જ ૧૫૦ પ્રશ્નોની ફૂલ લેન્થ)
   const generateTestMatrix = () => {
     const titlePrefix = selectedExam === "TET1" 
       ? "TET-1 જનરલ મોક ટેસ્ટ" 
@@ -52,8 +52,8 @@ export default function MockTestDashboard() {
     return Array.from({ length: 50 }, (_, i) => ({
       id: `${selectedExam}_${selectedSubject || "gen"}_test_${i + 1}`,
       title: `${titlePrefix} - ${String(i + 1).padStart(2, "0")}`,
-      totalQuestions: i < 2 ? 15 : 150, // ફ્રી ટેસ્ટ નાની અને મોક ટેસ્ટ ફૂલ લેન્થ
-      duration: i < 2 ? 20 : 120,
+      totalQuestions: 150, // ⚡ ફિક્સ: લોકો આકર્ષાય એના માટે ફ્રી ટેસ્ટમાં પણ પૂરા ૧૫૦ પ્રશ્નોનો ભડાકો!
+      duration: 120,       // ⚡ ફૂલ ૧૨૦ મિનિટની પરીક્ષા એન્જિન પરીક્ષા
       isFree: i < 2 
     }));
   };
@@ -63,7 +63,7 @@ export default function MockTestDashboard() {
       alert("🔒 આ પ્રીમિયમ મોક ટેસ્ટ લોક છે ભાઈ! કૃપા કરીને તેને અનલોક કરવા માટે ઉપર આપેલા બટન પરથી પેમેન્ટ કરો.");
       return;
     }
-    alert(`🚀 પરીક્ષા એન્જિન શરૂ થઈ રહ્યું છે ભાઈ! બેસ્ટ ઓફ લક.`);
+    alert(`🚀 ૧૫૦ પ્રશ્નોનું ફૂલ-લેન્થ પરીક્ષા એન્જિન શરૂ થઈ રહ્યું છે ભાઈ! બેસ્ટ ઓફ લક.`);
     window.location.href = `/mock-test/live/${testId}`;
   };
 
@@ -146,9 +146,9 @@ export default function MockTestDashboard() {
             <div style={{ backgroundColor: isCurrentPackageUnlocked ? "#e8f8f5" : "#fef9e7", border: isCurrentPackageUnlocked ? "1px solid #2ecc71" : "1px solid #f39c12", padding: "20px 24px", borderRadius: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
               <div>
                 <h4 style={{ margin: 0, color: "#2c3e50", fontSize: "16px" }}>
-                  🏁 સ્ટેટસ: {isCurrentPackageUnlocked ? "🔓 તમામ ૫૦ મોક ટેસ્ટ અનલોક છે ભાઈ!" : "🔒 ૨ ફ્રી ટેસ્ટ ચાલુ છે, બાકીની ૪૮ ટેસ્ટ લોક છે."}
+                  🏁 સ્ટેટસ: {isCurrentPackageUnlocked ? "🔓 તમામ ૫૦ મોક ટેસ્ટ અનલોક છે ભાઈ!" : "🔒 ૨ ફૂલ-લેન્થ ફ્રી ટેસ્ટ ચાલુ છે, બાકીની ૪૮ ટેસ્ટ લોક છે."}
                 </h4>
-                <p style={{ margin: "4px 0 0 0", color: "#7f8c8d", fontSize: "12px" }}>ખરીદ્યા બાદ તમામ ટેસ્ટ કાયમી માટે અનલોક જ રહેશે.</p>
+                <p style={{ margin: "4px 0 0 0", color: "#7f8c8d", fontSize: "12px" }}>૧૫૦ પ્રશ્નોની લાઈવ પરીક્ષા આપીને તમારું કૌશલ્ય ચકાસો ભાઈ.</p>
               </div>
               {!isCurrentPackageUnlocked && (
                 <button onClick={handleUnlockPackage} style={{ backgroundColor: "#f39c12", color: "#fff", border: "none", padding: "12px 20px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
@@ -158,7 +158,7 @@ export default function MockTestDashboard() {
             </div>
 
             {/* MOCK TEST ITEMS LIST SCROLL */}
-            <h3 style={{ color: "#2f3640", marginBottom: "20px", fontSize: "18px" }}>📋 મોક ટેસ્ટ શ્રેણી સીરીઝ (ટોટલ ૫૦ ટેસ્ટ)</h3>
+            <h3 style={{ color: "#2f3640", marginBottom: "20px", fontSize: "18px" }}>📋 ફૂલ-લેન્થ મોક ટેસ્ટ શ્રેણી સીરીઝ (૫૦ ટેસ્ટ x ૧autom prashno)</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               {generateTestMatrix().map((test) => {
                 const isAccessible = test.isFree || isCurrentPackageUnlocked;
@@ -168,7 +168,7 @@ export default function MockTestDashboard() {
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         <h4 style={{ margin: 0, fontSize: "15px", color: "#2c3e50" }}>{test.title}</h4>
                         {test.isFree ? (
-                          <span style={{ backgroundColor: "#e8f8f5", color: "#2ecc71", fontSize: "10px", fontWeight: "bold", padding: "2px 6px", borderRadius: "4px" }}>FREE TEST</span>
+                          <span style={{ backgroundColor: "#e8f8f5", color: "#2ecc71", fontSize: "10px", fontWeight: "bold", padding: "2px 6px", borderRadius: "4px" }}>૧૫૦ પ્રશ્નો FREE</span>
                         ) : (
                           <span style={{ backgroundColor: isCurrentPackageUnlocked ? "#e8f4fd" : "#f5f6fa", color: isCurrentPackageUnlocked ? "#2980b9" : "#7f8c8d", fontSize: "10px", fontWeight: "bold", padding: "2px 6px", borderRadius: "4px" }}>
                             {isCurrentPackageUnlocked ? "🔓 UNLOCKED" : "🔒 LOCKED"}
