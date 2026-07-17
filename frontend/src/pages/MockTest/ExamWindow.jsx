@@ -1,14 +1,9 @@
 // frontend/src/pages/MockTest/ExamWindow.jsx
-// (FARJIYAT AKHI FILE REPLACE - Real-time 150 Question Database Integration)
+// (FARJIYAT AKHI FILE REPLACE - Real Paper Shuffling Integration)
 
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { 
-  tet1Questions, 
-  tet2MathsQuestions, 
-  tet2BhashaQuestions, 
-  tet2SamajikQuestions 
-} from "../../data/questionsData";
+import { getDynamicMockTest } from "../../data/questionsData";
 
 export default function ExamWindow() {
   const { testId } = useParams();
@@ -20,47 +15,11 @@ export default function ExamWindow() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questions, setQuestions] = useState([]);
 
-  // 🔄 DYNAMIC QUESTION ENGINE ROUTING
+  // 🔄 DYNAMIC QUESTION ENGINE ROUTING (અસલી પ્રશ્નોનું ડાયનેમિક સિંકિંગ)
   useEffect(() => {
-    let selectedSet = [];
-
-    if (testId.startsWith("TET1")) {
-      // TET-1 ના પ્રશ્નો લોડ કરો
-      selectedSet = [...tet1Questions];
-    } else if (testId.includes("maths")) {
-      selectedSet = [...tet2MathsQuestions];
-    } else if (testId.includes("bhasha")) {
-      selectedSet = [...tet2BhashaQuestions];
-    } else if (testId.includes("samajik")) {
-      selectedSet = [...tet2SamajikQuestions];
-    } else {
-      selectedSet = [...tet1Questions]; // ફોલબેક સેન્ડબોક્સ સેટ
-    }
-
-    // જો કોઈ ડેટાસેટમાં ૧૫૦ થી ઓછા પ્રશ્નો હોય, તો બાકીના ૧૫૦ પ્રશ્નોનું માળખું જાળવવા ડાયનેમિકલી જનરેટ કરો
-    if (selectedSet.length < 150) {
-      const existingIds = selectedSet.map(q => q.id);
-      const remainingCount = 150 - selectedSet.length;
-      
-      let baseSection = "વિભાગ - ૨ : વિષય વસ્તુ પદ્ધતિ";
-      if (testId.startsWith("TET1")) baseSection = "વિભાગ – ૪ : ગણિત";
-
-      const filler = Array.from({ length: remainingCount }, (_, i) => {
-        const nextId = existingIds.length > 0 ? Math.max(...existingIds) + i + 1 : i + 1;
-        return {
-          id: nextId,
-          section: baseSection,
-          questionText: `પ્રશ્ન ${nextId}: મિશન TAT પરીક્ષાના સુધારેલા ડીટેઇલ અભ્યાસક્રમ આધારિત આગામી VIP પ્રશ્ન સામગ્રી.`,
-          options: ["વિકલ્પ A", "વિકલ્પ B", "વિકલ્પ C", "વિકલ્પ D"],
-          correct: 0
-        };
-      });
-      selectedSet = [...selectedSet, ...filler];
-    }
-
-    // ID પ્રમાણે સોર્ટિંગ
-    selectedSet.sort((a, b) => a.id - b.id);
-    setQuestions(selectedSet);
+    // getDynamicMockTest ફંક્શન દ્વારા જે-તે ટેસ્ટ આઈડી વાઇઝ પૂરા ૧૫૦ મિક્સ પ્રશ્નો લોડ થશે
+    const loadedQuestions = getDynamicMockTest(testId);
+    setQuestions(loadedQuestions);
   }, [testId]);
 
   // ⏱️ TIMER EFFECT RUNNER
