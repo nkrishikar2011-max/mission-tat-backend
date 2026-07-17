@@ -1,195 +1,226 @@
 // frontend/src/pages/MockTest/ExamWindow.jsx
-// (FARJIYAT AKHI FILE REPLACE - Eye Protection Comfort View Theme Engine)
+// (FARJIYAT AKHI FILE REPLACE - Live 150 Questions Exam Engine with Countdown Timer)
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useParams, useNavigate } from "react-router-dom";
-import { getAuth } from "firebase/auth";
-
-const LOCAL_API_URL = "http://localhost:5000";
-const PROD_API_URL = "https://mission-tat-backend.onrender.com";
+import { useParams } from "react-router-dom";
 
 export default function ExamWindow() {
   const { testId } = useParams();
-  const navigate = useNavigate();
-  const auth = getAuth();
-  const user = auth?.currentUser; 
   
-  const [test, setTest] = useState(null);
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState({}); 
+  // ⏱️ ૧૨૦ મિનિટનું સેકન્ડ્સમાં કાઉન્ટડાઉન (૧૨૦ * ૬૦ = ૭૨૦૦ સેકન્ડ)
   const [timeLeft, setTimeLeft] = useState(7200); 
-  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-  const API_BASE_URL = isLocalhost ? LOCAL_API_URL : PROD_API_URL;
+  // 📝 સિલેક્ટેડ અભ્યાસક્રમ આધારિત ૧૫૦ ડમી પ્રશ્નોનું ડાયનેમિક મેટ્રિક્સ (જેમાં પાછળથી અસલી માલ ભરીશું)
+  const totalQuestionsCount = 150;
+  const dummyQuestions = Array.from({ length: totalQuestionsCount }, (_, i) => {
+    let sectionName = "વિભાગ - ૧ : બાળ વિકાસ અને શૈક્ષણિક શાસ્ત્ર";
+    if (i >= 30 && i < 60) sectionName = "વિભાગ – ૨ : ગુજરાતી ભાષા";
+    if (i >= 60 && i < 90) sectionName = "વિભાગ – ૩ : અંગ્રેજી ભાષા";
+    if (i >= 90 && i < 120) sectionName = "વિભાગ – ૪ : ગણિત / વિષય વસ્તુ";
+    if (i >= 120) sectionName = "વિભાગ – ૫ : પર્યાવરણ અને સામાન્ય પ્રવાહો";
 
-  useEffect(() => {
-    if (!user && !isLocalhost) {
-      alert("🚨 આ લાઈવ ટેસ્ટ આપવા માટે કૃપા કરીને પહેલા લોગિન કરો ભાઈ!");
-      navigate("/login");
-      return;
-    }
+    return {
+      id: i + 1,
+      section: sectionName,
+      questionText: `પ્રશ્ન ${i + 1}: મિશન TAT પરીક્ષાના નવા સુધારેલા અભ્યાસક્રમ મુજબ નીચેનામાંથી કયું વિધાન શૈક્ષણિક મનોવિજ્ઞાનના સિદ્ધાંતને સાચી રીતે રજૂ કરે છે?`,
+      options: [
+        `વિકલ્પ A: બાળકેન્દ્રી શિક્ષણ પદ્ધતિનો પ્રભાવ`,
+        `વિકલ્પ B: પ્રગતિશીલ શિક્ષણ અને CCE માળખું`,
+        `વિકલ્પ C: અધ્યેતાની વ્યક્તિગત ભિન્નતાની સમજ`,
+        `વિકલ્પ D: ઉપરોક્ત તમામ સાચા છે`
+      ],
+      correct: 3 // સાચો જવાબ વિકલ્પ D
+    };
+  });
 
-    axios.get(`${API_BASE_URL}/api/mock-tests/${testId}`)
-      .then(res => {
-        setTest(res.data);
-        setTimeLeft(res.data.duration * 60);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Fallback to Eye-Comfort Mock Structure:", err);
-        setTest({
-          title: "TAT/TET-2 ગણિત અને મનોવિજ્ઞાન VIP મોક ટેસ્ટ",
-          duration: 120,
-          questions: Array.from({ length: 15 }, (_, i) => ({
-            questionId: `maths_t1_q${i + 1}`,
-            questionText: `પ્રશ્ન ${i + 1}: ધોરણ ૮ ના ગણિત વિષયમાં ક્ષેત્રફળ પ્રકરણ ભણાવવા માટે કઈ પદ્ધતિ શ્રેષ્ઠ રહેશે?`,
-            options: ["આગમન પદ્ધતિ", "નિગમન પદ્ધતિ", "પ્રયોગશાળા પદ્ધતિ", "પ્રોજેક્ટ પદ્ધતિ"],
-            correctOption: 0
-          }))
-        });
-        setLoading(false);
-      });
-  }, [testId, user, navigate, API_BASE_URL, isLocalhost]);
-
+  // ⏱️ TIMER EFFECT RUNNER
   useEffect(() => {
     if (timeLeft <= 0) {
-      handleSubmit();
+      handleAutoSubmit();
       return;
     }
-    const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
 
+  // ⏳ સેકન્ડ્સને મિનિટ અને સેકન્ડના ફોર્મેટમાં કન્વર્ટ કરો
   const formatTime = (seconds) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h > 0 ? h + ":" : ""}${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs > 0 ? hrs + ":" : ""}${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  const handleSelectOption = (qId, optIdx) => {
-    setAnswers({ ...answers, [qId]: optIdx });
+  const handleOptionSelect = (qId, optionIdx) => {
+    setSelectedAnswers({ ...selectedAnswers, [qId]: optionIdx });
   };
 
-  const handleSubmit = async () => {
-    const userId = user ? user.uid : "TEST_GUEST_USER_123";
-    try {
-      const payload = { userId, testId, userAnswers: answers };
-      await axios.post(`${API_BASE_URL}/api/mock-tests/submit`, payload);
-      alert("🎉 મોક ટેસ્ટ સફળતાપૂર્વક સબમિટ થઈ ગઈ છે ભાઈ!");
-      navigate(`/mock-test/dashboard`);
-    } catch (err) {
-      alert("🎉 મોક ટેસ્ટ લોકલી સેવ થઈ ગઈ છે ભાઈ!");
-      navigate(`/mock-test/dashboard`);
+  const handleAutoSubmit = () => {
+    alert("⏱️ સમય પૂરો થઈ ગયો છે ભાઈ! તમારી કસોટી ઓટોમેટોકલી સબમિટ થઈ રહી છે.");
+    processSubmission();
+  };
+
+  const handleManualSubmit = () => {
+    if (window.confirm("🏁 શું તમે ખરેખર આ ૧૫૦ પ્રશ્નોની મોક ટેસ્ટ સબમિટ કરવા માંગો છો ભાઈ?")) {
+      processSubmission();
     }
   };
 
-  if (loading) return <div style={{ color: "#2c3e50", backgroundColor: "#f4f6f9", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", fontFamily: "sans-serif" }}>⚙️ પ્રીમિયમ ટેસ્ટ એન્જિન લોડ થઈ રહ્યું છે...</div>;
-  if (!test) return <div style={{ color: "#c0392b", backgroundColor: "#f4f6f9", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", fontFamily: "sans-serif" }}>🚨 ટેસ્ટ મળી નથી ભાઈ!</div>;
+  const processSubmission = () => {
+    setIsSubmitting(true);
+    
+    // 📊 રિયલ-ટાઇમ માર્ક્સ અને સ્કોરિંગ મેટ્રિક્સ કેલ્ક્યુલેશન
+    let correctCount = 0;
+    let wrongCount = 0;
+    let skippedCount = 0;
 
-  const currentQuestion = test.questions[currentIdx];
+    dummyQuestions.forEach((q) => {
+      const userAns = selectedAnswers[q.id];
+      if (userAns === undefined) {
+        skippedCount++;
+      } else if (userAns === q.correct) {
+        correctCount++;
+      } else {
+        wrongCount++;
+      }
+    });
+
+    const attemptId = "att_" + Date.now();
+    const resultPayload = {
+      attemptId,
+      testId,
+      totalQuestions: totalQuestionsCount,
+      score: correctCount,
+      correctCount,
+      wrongCount,
+      skippedCount,
+      selectedAnswers,
+      submittedAt: new Date().toISOString()
+    };
+
+    // ફાયરબેઝ બેકઅપ માટે સેઝન સેન્ડબોક્સમાં રિઝલ્ટ લોક કરો
+    localStorage.setItem(`mission_tat_result_${attemptId}`, JSON.stringify(resultPayload));
+    
+    alert(`🎉 કસોટી સફળતાપૂર્વક સબમિટ થઈ ગઈ છે! તમારો સ્કોર: ${correctCount}/${totalQuestionsCount}`);
+    window.location.href = `/mock-test/result/${attemptId}`;
+  };
+
+  const currentQ = dummyQuestions[currentIndex];
+  const totalAttempted = Object.keys(selectedAnswers).length;
 
   return (
-    /* 🛡️ અલ્ટ્રા-કમ્ફર્ટ આઇ-પ્રોટેક્શન બેકગ્રાઉન્ડ (#f4f6f8 સોફ્ટ મેટ વ્હાઇટ/ગ્રે કલર) */
-    <div style={{ backgroundColor: "#f4f6f8", color: "#2c3e50", minHeight: "100vh", padding: "24px", fontFamily: "sans-serif" }}>
+    <div style={{ backgroundColor: "#f4f6f8", color: "#2c3e50", minHeight: "100vh", fontFamily: "sans-serif", display: "flex", flexDirection: "column" }}>
       
-      {/* Top Professional Elegant Bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#ffffff", padding: "16px 24px", borderRadius: "16px", border: "1px solid #dcdde1", marginBottom: "24px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+      {/* 🧭 TOP EXAM HEADER BAR */}
+      <div style={{ backgroundColor: "#ffffff", borderBottom: "1px solid #dcdde1", padding: "15px 30px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 10 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: "20px", color: "#2f3640" }}>{test.title}</h2>
-          <span style={{ color: "#2980b9", fontSize: "12px", fontWeight: "bold" }}>🛡️ EYE-COMFORT EXAM MODE</span>
+          <span style={{ fontSize: "12px", color: "#e67e22", fontWeight: "bold" }}>📝 LIVE EXAM PORTAL</span>
+          <h3 style={{ margin: "2px 0 0 0", color: "#2f3640", fontSize: "16px" }}>ટેસ્ટ ID: {testId}</h3>
         </div>
-        
-        {/* Soft Royal Blue Timer Box */}
-        <div style={{ background: timeLeft < 600 ? "#fce8e6" : "#e8f4fd", border: timeLeft < 600 ? "1px solid #c0392b" : "1px solid #2980b9", padding: "10px 20px", borderRadius: "10px", color: timeLeft < 600 ? "#c0392b" : "#2980b9", fontWeight: "bold", fontSize: "18px", fontFamily: "monospace" }}>
-          ⏱️ {formatTime(timeLeft)}
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <div style={{ fontSize: "14px", color: "#7f8c8d" }}>પ્રગતિ: <strong>{totalAttempted}</strong> / {totalQuestionsCount} આપેલા જવાબ</div>
+          <div style={{ backgroundColor: timeLeft < 600 ? "#fadbd8" : "#d5f5e3", color: timeLeft < 600 ? "#c0392b" : "#27ae60", padding: "8px 16px", borderRadius: "10px", fontWeight: "bold", fontSize: "16px", border: "1px solid" }}>
+            ⏱️ સમય: {formatTime(timeLeft)}
+          </div>
+          <button onClick={handleManualSubmit} disabled={isSubmitting} style={{ backgroundColor: "#e74c3c", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer" }}>
+            {isSubmitting ? "⚙️ સબમિટિંગ..." : "પરીક્ષા પૂરી કરો 🏁"}
+          </button>
         </div>
       </div>
 
-      {/* Main Grid Layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "24px" }}>
+      {/* MAIN TWO-COLUMN SPLIT GRID */}
+      <div style={{ display: "flex", flex: 1, padding: "20px", gap: "20px", maxWidth: "1200px", width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         
-        {/* Left Side: Soft Clean Question Box */}
-        <div style={{ backgroundColor: "#ffffff", border: "1px solid #dcdde1", padding: "30px", borderRadius: "24px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "420px", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
+        {/* LEFT COLUMN: QUESTION CONTENT WINDOW */}
+        <div style={{ flex: 1, backgroundColor: "#ffffff", border: "1px solid #dcdde1", borderRadius: "20px", padding: "30px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}>
           <div>
-            <span style={{ color: "#7f8c8d", fontWeight: "bold", fontSize: "14px" }}>પ્રશ્ન {currentIdx + 1} / {test.questions.length}</span>
-            <h3 style={{ fontSize: "21px", marginTop: "12px", lineHeight: "1.6", color: "#2f3640" }}>{currentQuestion.questionText}</h3>
+            <span style={{ backgroundColor: "#e8f4fd", color: "#2980b9", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold" }}>{currentQ.section}</span>
+            <h2 style={{ fontSize: "18px", color: "#2c3e50", lineHeight: "1.6", marginTop: "20px", marginBottom: "25px" }}>{currentQ.questionText}</h2>
             
-            {/* Soft Eye Protection Options Buttons */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "24px" }}>
-              {currentQuestion.options.map((opt, i) => {
-                const isSelected = answers[currentQuestion.questionId] === i;
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {currentQ.options.map((opt, idx) => {
+                const isSelected = selectedAnswers[currentQ.id] === idx;
                 return (
-                  <button 
-                    key={i} 
-                    onClick={() => handleSelectOption(currentQuestion.questionId, i)}
+                  <div 
+                    key={idx} 
+                    onClick={() => handleOptionSelect(currentQ.id, idx)}
                     style={{ 
-                      width: "100%", 
-                      textAlign: "left", 
-                      padding: "16px", 
-                      borderRadius: "12px", 
-                      border: isSelected ? "2px solid #2980b9" : "1px solid #dcdde1", 
-                      background: isSelected ? "#eaf2f8" : "#fcfcfc", 
-                      color: "#2c3e50", 
-                      fontSize: "16px", 
-                      cursor: "pointer", 
-                      transition: "all 0.15s ease",
-                      fontWeight: isSelected ? "bold" : "normal"
+                      padding: "16px 20px", borderRadius: "12px", border: isSelected ? "2px solid #2980b9" : "1px solid #dcdde1", 
+                      backgroundColor: isSelected ? "#eaf2f8" : "#f9f9f9", cursor: "pointer", fontSize: "14px", color: "#2c3e50", transition: "all 0.1s" 
                     }}
                   >
-                    <strong style={{ marginRight: "10px", color: isSelected ? "#2980b9" : "#7f8c8d" }}>{String.fromCharCode(65 + i)}.</strong> {opt}
-                  </button>
+                    <strong>{opt}</strong>
+                  </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Bottom Actions Buttons */}
+          {/* NEXT/PREV BOTTOM ACTION BAR */}
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: "40px", borderTop: "1px solid #f1f2f6", paddingTop: "20px" }}>
-            <button disabled={currentIdx === 0} onClick={() => setCurrentIdx(currentIdx - 1)} style={{ background: "#f5f6fa", color: "#7f8c8d", border: "1px solid #dcdde1", padding: "10px 20px", borderRadius: "10px", cursor: "pointer", fontWeight: "bold" }}>⬅️ પાછળ</button>
-            
-            {currentIdx < test.questions.length - 1 ? (
-              <button onClick={() => setCurrentIdx(currentIdx + 1)} style={{ background: "#2980b9", color: "#fff", border: "none", padding: "10px 24px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer" }}>આગળ વધો ➡️</button>
-            ) : (
-              <button onClick={handleSubmit} style={{ background: "#27ae60", color: "#fff", border: "none", padding: "10px 30px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer" }}>🏁 ટેસ્ટ સબમિટ કરો</button>
-            )}
+            <button 
+              disabled={currentIndex === 0}
+              onClick={() => setCurrentIndex(currentIndex - 1)}
+              style={{ backgroundColor: currentIndex === 0 ? "#f5f6fa" : "#2c3e50", color: currentIndex === 0 ? "#7f8c8d" : "#fff", border: "none", padding: "12px 24px", borderRadius: "10px", fontWeight: "bold", cursor: currentIndex === 0 ? "not-allowed" : "pointer" }}
+            >
+              ⬅️ પાછળનો પ્રશ્ન
+            </button>
+            <button 
+              disabled={currentIndex === totalQuestionsCount - 1}
+              onClick={() => setCurrentIndex(currentIndex + 1)}
+              style={{ backgroundColor: currentIndex === totalQuestionsCount - 1 ? "#f5f6fa" : "#2980b9", color: currentIndex === totalQuestionsCount - 1 ? "#7f8c8d" : "#fff", border: "none", padding: "12px 24px", borderRadius: "10px", fontWeight: "bold", cursor: currentIndex === totalQuestionsCount - 1 ? "not-allowed" : "pointer" }}
+            >
+              આગળનો પ્રશ્ન ➡️
+            </button>
           </div>
         </div>
 
-        {/* Right Side: Professional Sidebar Matrix */}
-        <div style={{ backgroundColor: "#ffffff", border: "1px solid #dcdde1", padding: "20px", borderRadius: "24px", height: "fit-content", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
-          <h4 style={{ margin: "0 0 14px 0", color: "#2f3640", fontSize: "15px" }}>🎯 પ્રશ્નોની સ્થિતિ</h4>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", maxHeight: "350px", overflowY: "auto", paddingRight: "4px" }}>
-            {test.questions.map((q, idx) => {
-              const isAnswered = answers[q.questionId] !== undefined;
-              const isCurrent = idx === currentIdx;
+        {/* RIGHT COLUMN: 150 QUESTIONS NAVIGATION PALETTE */}
+        <div style={{ width: "320px", backgroundColor: "#ffffff", border: "1px solid #dcdde1", borderRadius: "20px", padding: "20px", display: "flex", flexDirection: "column", maxHeight: "calc(100vh - 120px)", position: "sticky", top: "90px", boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}>
+          <h4 style={{ margin: "0 0 15px 0", fontSize: "14px", color: "#2f3640", borderBottom: "1px solid #f1f2f6", paddingBottom: "10px" }}>🧩 પ્રશ્ન પેલેટ ગ્રીડ</h4>
+          
+          <div style={{ flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", paddingRight: "4px" }}>
+            {dummyQuestions.map((q, idx) => {
+              const isAnswered = selectedAnswers[q.id] !== undefined;
+              const isCurrent = currentIndex === idx;
               
               let btnBg = "#f5f6fa";
-              let border = "1px solid #dcdde1";
-              let txtColor = "#7f8c8d";
+              let btnColor = "#7f8c8d";
+              let btnBorder = "1px solid #dcdde1";
 
               if (isAnswered) {
-                btnBg = "#d4edda";
-                border = "1px solid #28a745";
-                txtColor = "#155724";
+                btnBg = "#2ecc71";
+                btnColor = "#ffffff";
+                btnBorder = "1px solid #27ae60";
               }
               if (isCurrent) {
-                border = "2px solid #2980b9";
-                txtColor = "#2980b9";
+                btnBg = "#2980b9";
+                btnColor = "#ffffff";
+                btnBorder = "2px solid #1f618d";
               }
 
               return (
                 <button 
-                  key={idx} 
-                  onClick={() => setCurrentIdx(idx)}
-                  style={{ width: "100%", height: "42px", borderRadius: "8px", background: btnBg, border: border, color: txtColor, fontWeight: "bold", fontSize: "14px", cursor: "pointer" }}
+                  key={q.id}
+                  onClick={() => setCurrentIndex(idx)}
+                  style={{ backgroundColor: btnBg, color: btnColor, border: btnBorder, borderRadius: "8px", padding: "10px 0", fontSize: "12px", fontWeight: "bold", cursor: "pointer", textAlign: "center" }}
                 >
-                  {idx + 1}
+                  {q.id}
                 </button>
               );
             })}
+          </div>
+
+          {/* PALETTE LEGEND INFO */}
+          <div style={{ marginTop: "15px", borderTop: "1px solid #f1f2f6", paddingTop: "12px", display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#7f8c8d" }}>
+            <span>🔵 વર્તમાન</span>
+            <span>🟢 આપેલા જવાબ</span>
+            <span>⚪ બાકી પ્રશ્નો</span>
           </div>
         </div>
 
