@@ -1,8 +1,14 @@
 // frontend/src/pages/MockTest/ExamWindow.jsx
-// (FARJIYAT AKHI FILE REPLACE - Live 150 Questions Exam Engine with Countdown Timer)
+// (FARJIYAT AKHI FILE REPLACE - Real-time 150 Question Database Integration)
 
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { 
+  tet1Questions, 
+  tet2MathsQuestions, 
+  tet2BhashaQuestions, 
+  tet2SamajikQuestions 
+} from "../../data/questionsData";
 
 export default function ExamWindow() {
   const { testId } = useParams();
@@ -12,29 +18,50 @@ export default function ExamWindow() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [questions, setQuestions] = useState([]);
 
-  // 📝 સિલેક્ટેડ અભ્યાસક્રમ આધારિત ૧૫૦ ડમી પ્રશ્નોનું ડાયનેમિક મેટ્રિક્સ (જેમાં પાછળથી અસલી માલ ભરીશું)
-  const totalQuestionsCount = 150;
-  const dummyQuestions = Array.from({ length: totalQuestionsCount }, (_, i) => {
-    let sectionName = "વિભાગ - ૧ : બાળ વિકાસ અને શૈક્ષણિક શાસ્ત્ર";
-    if (i >= 30 && i < 60) sectionName = "વિભાગ – ૨ : ગુજરાતી ભાષા";
-    if (i >= 60 && i < 90) sectionName = "વિભાગ – ૩ : અંગ્રેજી ભાષા";
-    if (i >= 90 && i < 120) sectionName = "વિભાગ – ૪ : ગણિત / વિષય વસ્તુ";
-    if (i >= 120) sectionName = "વિભાગ – ૫ : પર્યાવરણ અને સામાન્ય પ્રવાહો";
+  // 🔄 DYNAMIC QUESTION ENGINE ROUTING
+  useEffect(() => {
+    let selectedSet = [];
 
-    return {
-      id: i + 1,
-      section: sectionName,
-      questionText: `પ્રશ્ન ${i + 1}: મિશન TAT પરીક્ષાના નવા સુધારેલા અભ્યાસક્રમ મુજબ નીચેનામાંથી કયું વિધાન શૈક્ષણિક મનોવિજ્ઞાનના સિદ્ધાંતને સાચી રીતે રજૂ કરે છે?`,
-      options: [
-        `વિકલ્પ A: બાળકેન્દ્રી શિક્ષણ પદ્ધતિનો પ્રભાવ`,
-        `વિકલ્પ B: પ્રગતિશીલ શિક્ષણ અને CCE માળખું`,
-        `વિકલ્પ C: અધ્યેતાની વ્યક્તિગત ભિન્નતાની સમજ`,
-        `વિકલ્પ D: ઉપરોક્ત તમામ સાચા છે`
-      ],
-      correct: 3 // સાચો જવાબ વિકલ્પ D
-    };
-  });
+    if (testId.startsWith("TET1")) {
+      // TET-1 ના પ્રશ્નો લોડ કરો
+      selectedSet = [...tet1Questions];
+    } else if (testId.includes("maths")) {
+      selectedSet = [...tet2MathsQuestions];
+    } else if (testId.includes("bhasha")) {
+      selectedSet = [...tet2BhashaQuestions];
+    } else if (testId.includes("samajik")) {
+      selectedSet = [...tet2SamajikQuestions];
+    } else {
+      selectedSet = [...tet1Questions]; // ફોલબેક સેન્ડબોક્સ સેટ
+    }
+
+    // જો કોઈ ડેટાસેટમાં ૧૫૦ થી ઓછા પ્રશ્નો હોય, તો બાકીના ૧૫૦ પ્રશ્નોનું માળખું જાળવવા ડાયનેમિકલી જનરેટ કરો
+    if (selectedSet.length < 150) {
+      const existingIds = selectedSet.map(q => q.id);
+      const remainingCount = 150 - selectedSet.length;
+      
+      let baseSection = "વિભાગ - ૨ : વિષય વસ્તુ પદ્ધતિ";
+      if (testId.startsWith("TET1")) baseSection = "વિભાગ – ૪ : ગણિત";
+
+      const filler = Array.from({ length: remainingCount }, (_, i) => {
+        const nextId = existingIds.length > 0 ? Math.max(...existingIds) + i + 1 : i + 1;
+        return {
+          id: nextId,
+          section: baseSection,
+          questionText: `પ્રશ્ન ${nextId}: મિશન TAT પરીક્ષાના સુધારેલા ડીટેઇલ અભ્યાસક્રમ આધારિત આગામી VIP પ્રશ્ન સામગ્રી.`,
+          options: ["વિકલ્પ A", "વિકલ્પ B", "વિકલ્પ C", "વિકલ્પ D"],
+          correct: 0
+        };
+      });
+      selectedSet = [...selectedSet, ...filler];
+    }
+
+    // ID પ્રમાણે સોર્ટિંગ
+    selectedSet.sort((a, b) => a.id - b.id);
+    setQuestions(selectedSet);
+  }, [testId]);
 
   // ⏱️ TIMER EFFECT RUNNER
   useEffect(() => {
@@ -48,7 +75,6 @@ export default function ExamWindow() {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  // ⏳ સેકન્ડ્સને મિનિટ અને સેકન્ડના ફોર્મેટમાં કન્વર્ટ કરો
   const formatTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -74,12 +100,11 @@ export default function ExamWindow() {
   const processSubmission = () => {
     setIsSubmitting(true);
     
-    // 📊 રિયલ-ટાઇમ માર્ક્સ અને સ્કોરિંગ મેટ્રિક્સ કેલ્ક્યુલેશન
     let correctCount = 0;
     let wrongCount = 0;
     let skippedCount = 0;
 
-    dummyQuestions.forEach((q) => {
+    questions.forEach((q) => {
       const userAns = selectedAnswers[q.id];
       if (userAns === undefined) {
         skippedCount++;
@@ -94,7 +119,7 @@ export default function ExamWindow() {
     const resultPayload = {
       attemptId,
       testId,
-      totalQuestions: totalQuestionsCount,
+      totalQuestions: questions.length,
       score: correctCount,
       correctCount,
       wrongCount,
@@ -103,14 +128,15 @@ export default function ExamWindow() {
       submittedAt: new Date().toISOString()
     };
 
-    // ફાયરબેઝ બેકઅપ માટે સેઝન સેન્ડબોક્સમાં રિઝલ્ટ લોક કરો
     localStorage.setItem(`mission_tat_result_${attemptId}`, JSON.stringify(resultPayload));
     
-    alert(`🎉 કસોટી સફળતાપૂર્વક સબમિટ થઈ ગઈ છે! તમારો સ્કોર: ${correctCount}/${totalQuestionsCount}`);
+    alert(`🎉 કસોટી સફળતાપૂર્વક સબમિટ થઈ ગઈ છે! તમારો સ્કોર: ${correctCount}/${questions.length}`);
     window.location.href = `/mock-test/result/${attemptId}`;
   };
 
-  const currentQ = dummyQuestions[currentIndex];
+  if (questions.length === 0) return <div style={{ color: "#2c3e50", backgroundColor: "#f4f6f8", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", fontFamily: "sans-serif" }}>⚙️ પ્રશ્ન બેંક લોડ થઈ રહી છે...</div>;
+
+  const currentQ = questions[currentIndex];
   const totalAttempted = Object.keys(selectedAnswers).length;
 
   return (
@@ -123,7 +149,7 @@ export default function ExamWindow() {
           <h3 style={{ margin: "2px 0 0 0", color: "#2f3640", fontSize: "16px" }}>ટેસ્ટ ID: {testId}</h3>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <div style={{ fontSize: "14px", color: "#7f8c8d" }}>પ્રગતિ: <strong>{totalAttempted}</strong> / {totalQuestionsCount} આપેલા જવાબ</div>
+          <div style={{ fontSize: "14px", color: "#7f8c8d" }}>પ્રગતિ: <strong>{totalAttempted}</strong> / {questions.length} આપેલા જવાબ</div>
           <div style={{ backgroundColor: timeLeft < 600 ? "#fadbd8" : "#d5f5e3", color: timeLeft < 600 ? "#c0392b" : "#27ae60", padding: "8px 16px", borderRadius: "10px", fontWeight: "bold", fontSize: "16px", border: "1px solid" }}>
             ⏱️ સમય: {formatTime(timeLeft)}
           </div>
@@ -140,7 +166,7 @@ export default function ExamWindow() {
         <div style={{ flex: 1, backgroundColor: "#ffffff", border: "1px solid #dcdde1", borderRadius: "20px", padding: "30px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}>
           <div>
             <span style={{ backgroundColor: "#e8f4fd", color: "#2980b9", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold" }}>{currentQ.section}</span>
-            <h2 style={{ fontSize: "18px", color: "#2c3e50", lineHeight: "1.6", marginTop: "20px", marginBottom: "25px" }}>{currentQ.questionText}</h2>
+            <h2 style={{ fontSize: "17px", color: "#2c3e50", lineHeight: "1.6", marginTop: "20px", marginBottom: "25px" }}>{currentQ.questionText}</h2>
             
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {currentQ.options.map((opt, idx) => {
@@ -150,7 +176,7 @@ export default function ExamWindow() {
                     key={idx} 
                     onClick={() => handleOptionSelect(currentQ.id, idx)}
                     style={{ 
-                      padding: "16px 20px", borderRadius: "12px", border: isSelected ? "2px solid #2980b9" : "1px solid #dcdde1", 
+                      padding: "15px 20px", borderRadius: "12px", border: isSelected ? "2px solid #2980b9" : "1px solid #dcdde1", 
                       backgroundColor: isSelected ? "#eaf2f8" : "#f9f9f9", cursor: "pointer", fontSize: "14px", color: "#2c3e50", transition: "all 0.1s" 
                     }}
                   >
@@ -171,21 +197,21 @@ export default function ExamWindow() {
               ⬅️ પાછળનો પ્રશ્ન
             </button>
             <button 
-              disabled={currentIndex === totalQuestionsCount - 1}
+              disabled={currentIndex === questions.length - 1}
               onClick={() => setCurrentIndex(currentIndex + 1)}
-              style={{ backgroundColor: currentIndex === totalQuestionsCount - 1 ? "#f5f6fa" : "#2980b9", color: currentIndex === totalQuestionsCount - 1 ? "#7f8c8d" : "#fff", border: "none", padding: "12px 24px", borderRadius: "10px", fontWeight: "bold", cursor: currentIndex === totalQuestionsCount - 1 ? "not-allowed" : "pointer" }}
+              style={{ backgroundColor: currentIndex === questions.length - 1 ? "#f5f6fa" : "#2980b9", color: currentIndex === questions.length - 1 ? "#7f8c8d" : "#fff", border: "none", padding: "12px 24px", borderRadius: "10px", fontWeight: "bold", cursor: currentIndex === questions.length - 1 ? "not-allowed" : "pointer" }}
             >
               આગળનો પ્રશ્ન ➡️
             </button>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: 150 QUESTIONS NAVIGATION PALETTE */}
+        {/* RIGHT COLUMN: QUESTIONS NAVIGATION PALETTE */}
         <div style={{ width: "320px", backgroundColor: "#ffffff", border: "1px solid #dcdde1", borderRadius: "20px", padding: "20px", display: "flex", flexDirection: "column", maxHeight: "calc(100vh - 120px)", position: "sticky", top: "90px", boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}>
           <h4 style={{ margin: "0 0 15px 0", fontSize: "14px", color: "#2f3640", borderBottom: "1px solid #f1f2f6", paddingBottom: "10px" }}>🧩 પ્રશ્ન પેલેટ ગ્રીડ</h4>
           
           <div style={{ flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", paddingRight: "4px" }}>
-            {dummyQuestions.map((q, idx) => {
+            {questions.map((q, idx) => {
               const isAnswered = selectedAnswers[q.id] !== undefined;
               const isCurrent = currentIndex === idx;
               
@@ -216,7 +242,6 @@ export default function ExamWindow() {
             })}
           </div>
 
-          {/* PALETTE LEGEND INFO */}
           <div style={{ marginTop: "15px", borderTop: "1px solid #f1f2f6", paddingTop: "12px", display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#7f8c8d" }}>
             <span>🔵 વર્તમાન</span>
             <span>🟢 આપેલા જવાબ</span>
