@@ -1,5 +1,5 @@
 // frontend/src/pages/MockTest/ExamWindow.jsx
-// (FARJIYAT AKHI FILE REPLACE - Real Paper Shuffling Integration)
+// (FARJIYAT AKHI FILE REPLACE - Removed Section Headers For Real Exam Feel)
 
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
@@ -8,21 +8,17 @@ import { getDynamicMockTest } from "../../data/questionsData";
 export default function ExamWindow() {
   const { testId } = useParams();
   
-  // ⏱️ ૧૨૦ મિનિટનું સેકન્ડ્સમાં કાઉન્ટડાઉન (૧૨૦ * ૬૦ = ૭૨૦૦ સેકન્ડ)
   const [timeLeft, setTimeLeft] = useState(7200); 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questions, setQuestions] = useState([]);
 
-  // 🔄 DYNAMIC QUESTION ENGINE ROUTING (અસલી પ્રશ્નોનું ડાયનેમિક સિંકિંગ)
   useEffect(() => {
-    // getDynamicMockTest ફંક્શન દ્વારા જે-તે ટેસ્ટ આઈડી વાઇઝ પૂરા ૧૫૦ મિક્સ પ્રશ્નો લોડ થશે
     const loadedQuestions = getDynamicMockTest(testId);
     setQuestions(loadedQuestions);
   }, [testId]);
 
-  // ⏱️ TIMER EFFECT RUNNER
   useEffect(() => {
     if (timeLeft <= 0) {
       handleAutoSubmit();
@@ -124,8 +120,8 @@ export default function ExamWindow() {
         {/* LEFT COLUMN: QUESTION CONTENT WINDOW */}
         <div style={{ flex: 1, backgroundColor: "#ffffff", border: "1px solid #dcdde1", borderRadius: "20px", padding: "30px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}>
           <div>
-            <span style={{ backgroundColor: "#e8f4fd", color: "#2980b9", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold" }}>{currentQ.section}</span>
-            <h2 style={{ fontSize: "17px", color: "#2c3e50", lineHeight: "1.6", marginTop: "20px", marginBottom: "25px" }}>{currentQ.questionText}</h2>
+            {/* 🛑 નિતિનભાઈ, પરીક્ષાના અસલી ફીલ માટે અહીંથી સેક્શન હેડરનું આખું ટેગ (Badge) દૂર કરી દીધું છે! */}
+            <h2 style={{ fontSize: "17px", color: "#2c3e50", lineHeight: "1.6", marginTop: "10px", marginBottom: "25px" }}>{currentQ.questionText}</h2>
             
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {currentQ.options.map((opt, idx) => {
