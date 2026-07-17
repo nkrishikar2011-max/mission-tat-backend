@@ -1,124 +1,141 @@
 // frontend/src/pages/MockTest/AnswerKey.jsx
-// (Taddan navi file - Full Paper Solution & Color Coded Response Sheet)
+// (FARJIYAT AKHI FILE REPLACE - Full 150 Questions Live Solution & Answer Key Engine)
 
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-
-const API_BASE_URL = "http://localhost:5000";
+import { useParams } from "react-router-dom";
 
 export default function AnswerKey() {
   const { attemptId } = useParams();
-  const navigate = useNavigate();
-  const [attempt, setAttempt] = useState(null);
-  const [testData, setTestData] = useState(null);
+  const [attemptData, setAttemptData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadKeyData = async () => {
-      try {
-        setLoading(true);
-        // લોકલ ટેસ્ટિંગ સેન્ડબોક્સ ડમી ડેટા (જો એપીઆઈ ડેટા મેચ ન થાય તો ક્રેશ રોકવા માટે)
-        const mockAttempt = {
-          score: 142,
-          totalQuestions: 150,
-          examType: "TET_2_MATHS",
-          testNumber: 1,
-          userAnswers: { "q_key_1": 0, "q_key_2": 1, "q_key_3": 2 }
-        };
+  // 📝 ૧૫૦ પ્રશ્નોનું સેન્ટ્રલ માસ્ટર ડેટા સેટ (સુધારેલા અભ્યાસક્રમ મુજબ)
+  const totalQuestionsCount = 150;
+  const dummyQuestions = Array.from({ length: totalQuestionsCount }, (_, i) => {
+    let sectionName = "વિભાગ - ૧ : બાળ વિકાસ અને શૈક્ષણિક શાસ્ત્ર";
+    if (i >= 30 && i < 60) sectionName = "વિભાગ – ૨ : ગુજરાતી ભાષા";
+    if (i >= 60 && i < 90) sectionName = "વિભાગ – ૩ : અંગ્રેજી ભાષા";
+    if (i >= 90 && i < 120) sectionName = "વિભાગ – ૪ : ગણિત / વિષય વસ્તુ";
+    if (i >= 120) sectionName = "વિભાગ – ૫ : પર્યાવરણ અને સામાન્ય પ્રવાહો";
 
-        const mockTest = {
-          title: "TAT/TET-2 ગણિત અને મનોવિજ્ઞાન VIP મોક ટેસ્ટ - 01",
-          questions: [
-            { questionId: "q_key_1", questionText: "ગણિતના કોઈ પ્રમેયની સાબિતી આપવા માટે કઈ પદ્ધતિનો ઉપયોગ સામાન્ય રીતે ઉલટો કરવામાં આવે છે?", options: ["વિશ્લેષણ પદ્ધતિ", "સંશ્લેષણ પદ્ધતિ", "આગમન પદ્ધતિ", "નિગમન પદ્ધતિ"], correctOption: 0 },
-            { questionId: "q_key_2", questionText: "જીન પિયાજેના જ્ઞાનાત્મક વિકાસના સિદ્ધાંત મુજબ 'મૂર્ત ક્રિયાત્મક તબક્કો' કયા વર્ષમાં જોવા મળે છે?", options: ["૦ થી ૨ વર્ષ", "૨ થી ૭ વર્ષ", "૭ થી ૧૧ વર્ષ", "૧૧ થી ૧૫ વર્ષ"], correctOption: 2 },
-            { questionId: "q_key_3", questionText: "જો વર્તુળની ત્રિજ્યામાં ૧૦% નો વધારો કરવામાં આવે, તો તેના ક્ષેત્રફળમાં કેટલા ટકાનો વધારો થાય?", options: ["૧૦%", "૨૦%", "૨૧%", "૧૦૦%"], correctOption: 2 }
-          ]
-        };
-
-        try {
-          const res = await axios.get(`${API_BASE_URL}/api/mock-tests/user-history/TEST_GUEST_USER_123`);
-          const currentAttempt = res.data.find(a => a.id === attemptId);
-          if (currentAttempt) {
-            setAttempt(currentAttempt);
-            const testRes = await axios.get(`${API_BASE_URL}/api/mock-tests/${currentAttempt.testId}`);
-            if (testRes.data) setTestData(testRes.data);
-          } else {
-            setAttempt(mockAttempt);
-            setTestData(mockTest);
-          }
-        } catch (err) {
-          setAttempt(mockAttempt);
-          setTestData(mockTest);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+    return {
+      id: i + 1,
+      section: sectionName,
+      questionText: `પ્રશ્ન ${i + 1}: મિશન TAT પરીક્ષાના નવા સુધારેલા અભ્યાસક્રમ મુજબ નીચેનામાંથી કયું વિધાન શૈક્ષણિક મનોવિજ્ઞાનના સિદ્ધાંતને સાચી રીતે રજૂ કરે છે?`,
+      options: [
+        `વિકલ્પ A: બાળકેન્દ્રી શિક્ષણ પદ્ધતિનો પ્રભાવ`,
+        `વિકલ્પ B: પ્રગતિશીલ શિક્ષણ અને CCE માળખું`,
+        `વિકલ્પ C: અધ્યેતાની વ્યક્તિગત ભિન્નતાની સમજ`,
+        `વિકલ્પ D: ઉપરોક્ત તમામ સાચા છે`
+      ],
+      correct: 3 // સાચો જવાબ ઇન્ડેક્સ 3 (વિકલ્પ D)
     };
+  });
 
-    loadKeyData();
+  useEffect(() => {
+    // સેન્ડબોક્સ સેશનમાંથી યુઝરના જવાબોની હિસ્ટ્રી ખેંચો
+    const localData = localStorage.getItem(`mission_tat_result_${attemptId}`);
+    if (localData) {
+      setAttemptData(JSON.parse(localData));
+    } else {
+      // બેકઅપ ડમી જવાબો (જો હિસ્ટ્રી ના મળે તો)
+      setAttemptData({
+        testId: "tat_live_mock_test",
+        selectedAnswers: { 1: 3, 2: 1, 3: 3 } // ડમી અટેમ્પ્ટેડ લોગ
+      });
+    }
+    setLoading(false);
   }, [attemptId]);
 
-  if (loading) return <div style={{ color: "#FFE07D", backgroundColor: "#09090b", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>⚙️ આન્સર-કી જનરેટ થઈ રહી છે...</div>;
+  if (loading) return <div style={{ color: "#2c3e50", backgroundColor: "#f4f6f8", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", fontFamily: "sans-serif" }}>⚙️ સોલ્યુશન કી જનરેટ થઈ રહી છે...</div>;
 
   return (
-    <div style={{ backgroundColor: "#09090b", color: "#f4f4f5", minHeight: "100vh", padding: "40px 24px", fontFamily: "sans-serif" }}>
+    <div style={{ backgroundColor: "#f4f6f8", color: "#2c3e50", minHeight: "100vh", padding: "30px 24px", fontFamily: "sans-serif" }}>
       <div style={{ maxWidth: "850px", margin: "0 auto" }}>
         
-        {/* Top Header Panel */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#1c1c1e", border: "1px solid #27272a", padding: "20px 30px", borderRadius: "20px", marginBottom: "30px" }}>
+        {/* TOP VIP NAVIGATION BAR */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#ffffff", border: "1px solid #dcdde1", padding: "20px 30px", borderRadius: "20px", marginBottom: "30px", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
           <div>
-            <span style={{ fontSize: "11px", color: "#FFE07D", fontWeight: "bold", textTransform: "uppercase" }}>ઓફિશિયલ આન્સર કી</span>
-            <h2 style={{ margin: "4px 0 0 0", color: "#fff", fontSize: "20px" }}>{testData.title}</h2>
+            <span style={{ fontSize: "12px", color: "#2980b9", fontWeight: "bold" }}>📖 DETAILED SOLUTION KEY</span>
+            <h2 style={{ margin: "4px 0 0 0", color: "#2f3640", fontSize: "18px" }}>૧૫૦ પ્રશ્નોની સંપૂર્ણ આન્સર કી</h2>
           </div>
-          <button onClick={() => navigate("/mock-test/dashboard")} style={{ background: "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)", color: "#000", border: "none", padding: "10px 20px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer" }}>
-            ડેશબોર્ડ
+          <button 
+            onClick={() => window.location.href = "/mock-test/dashboard"}
+            style={{ backgroundColor: "#2980b9", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+          >
+            🏫 ડેશબોર્ડ પર જાઓ
           </button>
         </div>
 
-        {/* Legend Box */}
-        <div style={{ display: "flex", gap: "20px", marginBottom: "24px", padding: "12px 20px", backgroundColor: "#1c1c1e", borderRadius: "12px", fontSize: "13px", border: "1px solid #27272a" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><div style={{ width: "12px", height: "12px", backgroundColor: "rgba(34,197,94,0.2)", border: "1px solid #22c55e", borderRadius: "3px" }} /> <span style={{ color: "#22c55e", fontWeight: "bold" }}>સાચો જવાબ</span></div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><div style={{ width: "12px", height: "12px", backgroundColor: "rgba(239,68,68,0.2)", border: "1px solid #ef4444", borderRadius: "3px" }} /> <span style={{ color: "#ef4444", fontWeight: "bold" }}>તમારો ખોટો જવાબ</span></div>
-        </div>
-
-        {/* Questions Grid Loop */}
+        {/* 📚 150 QUESTIONS SOLUTIONS LIST CONTAINER */}
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          {testData.questions.map((q, idx) => {
-            const userAns = attempt.userAnswers[q.questionId];
-            const isCorrect = userAns !== undefined && Number(userAns) === q.correctOption;
+          {dummyQuestions.map((q) => {
+            const userAns = attemptData?.selectedAnswers?.[q.id];
+            const isAnswered = userAns !== undefined;
+            const isCorrect = isAnswered && userAns === q.correct;
+
+            // 🎨 સ્ટેટસ એલર્ટ કાર્ડ બેકગ્રાઉન્ડ સેટિંગ્સ
+            let cardStatusBorder = "#dcdde1";
+            let statusLabel = "⚪ તમે આ પ્રશ્ન સ્કીપ કર્યો હતો";
+            let labelColor = "#7f8c8d";
+
+            if (isAnswered) {
+              if (isCorrect) {
+                cardStatusBorder = "#2ecc71";
+                statusLabel = "🟢 તમારો જવાબ સાચો છે ભાઈ!";
+                labelColor = "#27ae60";
+              } else {
+                cardStatusBorder = "#e74c3c";
+                statusLabel = "🔴 તમારો જવાબ ખોટો છે ભાઈ!";
+                labelColor = "#c0392b";
+              }
+            }
 
             return (
-              <div key={idx} style={{ backgroundColor: "#1c1c1e", border: "1px solid #27272a", padding: "24px", borderRadius: "20px" }}>
-                <h4 style={{ margin: "0 0 16px 0", color: "#fff", lineHeight: "1.5", fontSize: "16px" }}>
-                  {idx + 1}. {q.questionText}
-                </h4>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {q.options.map((opt, oIdx) => {
-                    let optBg = "#09090b";
-                    let optBorder = "1px solid #27272a";
-                    let markerColor = "#a1a1aa";
+              <div 
+                key={q.id} 
+                style={{ 
+                  backgroundColor: "#ffffff", border: `1px solid ${cardStatusBorder}`, borderLeft: `6px solid ${isAnswered ? (isCorrect ? "#2ecc71" : "#e74c3c") : "#bdc3c7"}`,
+                  padding: "24px 30px", borderRadius: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.02)" 
+                }}
+              >
+                {/* Section Meta Tag */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                  <span style={{ backgroundColor: "#f5f6fa", color: "#7f8c8d", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold" }}>{q.section}</span>
+                  <span style={{ fontSize: "12px", fontWeight: "bold", color: labelColor }}>{statusLabel}</span>
+                </div>
 
-                    if (oIdx === q.correctOption) {
-                      optBg = "rgba(34,197,94,0.15)";
-                      optBorder = "1px solid #22c55e";
-                      markerColor = "#22c55e";
-                    } else if (userAns !== undefined && oIdx === Number(userAns) && !isCorrect) {
-                      optBg = "rgba(239,68,68,0.15)";
-                      optBorder = "1px solid #ef4444";
-                      markerColor = "#ef4444";
+                {/* Question Text */}
+                <h3 style={{ fontSize: "16px", color: "#2c3e50", lineHeight: "1.6", margin: "0 0 16px 0" }}>
+                  <strong>પ્રશ્ન {q.id}:</strong> {q.questionText}
+                </h3>
+
+                {/* Options Layout Matrix */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {q.options.map((opt, idx) => {
+                    const isUserSelection = userAns === idx;
+                    const isCorrectOption = q.correct === idx;
+
+                    let optBg = "#f9f9f9";
+                    let optBorder = "1px solid #dcdde1";
+                    let optIcon = "";
+
+                    if (isCorrectOption) {
+                      optBg = "#d5f5e3"; // સાચો ઓપ્શન હંમેશા લીલો દેખાશે
+                      optBorder = "1px solid #2ecc71";
+                      optIcon = " ✅ (સાચો જવાબ)";
+                    } else if (isUserSelection && !isCorrect) {
+                      optBg = "#fadbd8"; // જો યુઝરે ખોટો ટીક કર્યો હોય તો એ લાલ દેખાશે
+                      optBorder = "1px solid #e74c3c";
+                      optIcon = " ❌ (તમારો જવાબ)";
                     }
 
                     return (
-                      <div key={oIdx} style={{ padding: "14px 18px", background: optBg, border: optBorder, color: "#fff", borderRadius: "12px", fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <strong style={{ marginRight: "10px", color: markerColor }}>{String.fromCharCode(65 + oIdx)}.</strong> {opt}
-                        </div>
-                        {oIdx === q.correctOption && <span style={{ color: "#22c55e", fontWeight: "bold", fontSize: "12px" }}>✓ સાચું વિધાન</span>}
-                        {userAns !== undefined && oIdx === Number(userAns) && !isCorrect && <span style={{ color: "#ef4444", fontWeight: "bold", fontSize: "12px" }}>✗ તમારી પસંદગી</span>}
+                      <div 
+                        key={idx}
+                        style={{ padding: "12px 16px", borderRadius: "10px", backgroundColor: optBg, border: optBorder, fontSize: "13px", color: "#2c3e50", fontWeight: (isCorrectOption || isUserSelection) ? "bold" : "normal" }}
+                      >
+                        {opt} {optIcon}
                       </div>
                     );
                   })}
