@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MISSION TAT GUJARAT</string>
+    <string name="title_activity_main">MISSION TAT GUJARAT</string>
+    <string name="package_name">com.freyasolution.missiontat</string>
+    <string name="custom_url_scheme">com.freyasolution.missiontat</string>
+</resources>
