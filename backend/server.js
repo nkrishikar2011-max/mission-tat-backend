@@ -52,7 +52,7 @@ app.post("/api/payments/order", async (req, res) => {
   try {
     const { amount, currency } = req.body;
     const options = {
-      amount: amount * 100, // amount in paisa
+      amount: amount * 100, 
       currency: currency || "INR",
       receipt: `receipt_${Date.now()}`,
     };
@@ -65,12 +65,45 @@ app.post("/api/payments/order", async (req, res) => {
   }
 });
 
-// 💳 ૨. પેમેન્ટ સ્ટેટસ વેરીફાય કરવાનો રાઉટ (GET/POST)
+// 💳 ૨. પેમેન્ટ વેરીફાય કરવાનો અને ડેટાબેઝમાં ખરીદી નોંધવાનો રાઉટ (POST) - આ મિસિંગ હતો!
+app.post("/api/payments/verify", async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, productId, userId, userName } = req.body;
+
+    // Razorpay સિગ્નેચર વેરીફિકેશન લોજિક
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(sign.toString())
+      .digest("hex");
+
+    if (razorpay_signature === expectedSign) {
+      // પેમેન્ટ સિક્યોર છે, હવે ફાયરબેઝના 'purchases' કલેક્શનમાં એન્ટ્રી પાડો જેથી ફ્રન્ટએન્ડ અનલોક કરી શકે
+      const purchaseData = {
+        userId: userId || "",
+        userName: userName || "Anonymous",
+        productId: productId || "",
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id,
+        purchasedAt: new Date().toISOString()
+      };
+
+      await db.collection("purchases").add(purchaseData);
+      return res.status(200).json({ success: true, message: "પેમેન્ટ વેરીફાય થયું અને મટીરિયલ અનલોક થયું!" });
+    } else {
+      return res.status(400).json({ success: false, error: "Invalid payment signature!" });
+    }
+  } catch (error) {
+    console.error("Payment verification error:", error);
+    res.status(500).json({ success: false, error: "પેમેન્ટ વેરીફિકેશન પ્રક્રિયા નિષ્ફળ થઈ." });
+  }
+});
+
+// 💳 ૩. પેમેન્ટ સ્ટેટસ વેરીફાય કરવાનો રાઉટ (GET)
 app.get("/api/payments/check-status", async (req, res) => {
   try {
     const { productId, userId } = req.query;
     
-    // યુઝરે પ્રોડક્ટ ખરીદેલી છે કે નહીં તે કન્ફર્મ કરવા માટે 'purchases' કલેક્શન ચેક કરો
     const purchaseSnapshot = await db.collection("purchases")
       .where("userId", "==", userId)
       .where("productId", "==", productId)
