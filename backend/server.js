@@ -133,5 +133,25 @@ app.post("/api/feedback", async (req, res) => {
     res.status(500).json({ error: "સૂચન સબમિટ કરવામાં ભૂલ થઈ." });
   }
 });
+// 💬 ૩. એડમિન દ્વારા કમેન્ટનો જવાબ (Reply) સબમિટ કરવાનો રાઉટ (POST)
+app.post("/api/feedback/:id/reply", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { adminReply } = req.body;
+
+    const feedbackRef = db.collection("feedbacks").doc(id);
+    
+    // ડેટાબેઝના માળખા પ્રમાણે adminReply અને repliedAt અપડેટ થશે
+    await feedbackRef.update({
+      adminReply: adminReply || "",
+      repliedAt: new Date().toISOString()
+    });
+
+    res.status(200).json({ success: true, message: "જવાબ સફળતાપૂર્વક સબમિટ થયો!" });
+  } catch (error) {
+    console.error("Reply submit error:", error);
+    res.status(500).json({ error: "જવાબ ગોઠવવામાં લોચો થયો." });
+  }
+});
 // SERVER START
 app.listen(5000, () => console.log("🚀 MISSION TAT GUJARAT Backend Live on Port 5000"));
