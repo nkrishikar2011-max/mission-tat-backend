@@ -62,7 +62,8 @@ app.post("/api/analytics/hit", async (req, res) => {
 // 📊 2. એનાલિટિક્સ ડેટા મેળવવાનો રાઉટ
 app.get("/api/analytics/traffic", async (req, res) => {
   try {
-    const feedbackSnapshot = await db.collection("feedback").get();
+    // એનાલિટિક્સ માટે અસલી કલેક્શન 'feedbacks' માંથી ડેટા ગણશે
+    const feedbackSnapshot = await db.collection("feedbacks").get();
     const productsSnapshot = await db.collection("products").get();
     const trafficDoc = await db.collection("analytics").doc("site_traffic").get();
 
@@ -96,14 +97,20 @@ app.post("/api/products", uploadConfig, createProduct);
 app.put("/api/products/:id", uploadConfig, updateProduct);
 app.delete("/api/products/:id", deleteProduct);
 app.post('/api/auth/firebase-login', firebaseLogin);
+
 // 💬 ૧. તાજેતરના બધા જ સજેશન્સ મેળવવાનો રાઉટ (GET)
 app.get("/api/feedback", async (req, res) => {
   try {
-    // કલેક્શનનું સાચું નામ 'feedbacks' છે
     const snapshot = await db.collection("feedbacks").orderBy("createdAt", "desc").get();
     const feedbacks = [];
     snapshot.forEach(doc => {
-      feedbacks.push({ id: doc.id, ...doc.data() });
+      const data = doc.data();
+      feedbacks.push({ 
+        id: doc.id, 
+        ...data,
+        // userId માં જ મોબાઈલ નંબર છે, એટલે એને ડાયરેક્ટ mobile તરીકે મોકલી દીધો
+        mobile: data.userId || "નથી નોંધાયો" 
+      });
     });
     res.status(200).json(feedbacks);
   } catch (error) {
@@ -117,10 +124,9 @@ app.post("/api/feedback", async (req, res) => {
   try {
     const { materialDemand, reviewText, userName, userId } = req.body;
     
-    // ડેટાબેઝના અસલી માળખા પ્રમાણે ફીલ્ડ સેટ કર્યા
     const newFeedback = {
       materialDemand: materialDemand || "",
-      reviewText: reviewText || "", // સાચું નામ reviewText
+      reviewText: reviewText || "", 
       userName: userName || "Anonymous",
       userId: userId || "",
       createdAt: new Date().toISOString()
@@ -133,6 +139,7 @@ app.post("/api/feedback", async (req, res) => {
     res.status(500).json({ error: "સૂચન સબમિટ કરવામાં ભૂલ થઈ." });
   }
 });
+
 // 💬 ૩. એડમિન દ્વારા કમેન્ટનો જવાબ (Reply) સબમિટ કરવાનો રાઉટ (POST)
 app.post("/api/feedback/:id/reply", async (req, res) => {
   try {
@@ -141,7 +148,6 @@ app.post("/api/feedback/:id/reply", async (req, res) => {
 
     const feedbackRef = db.collection("feedbacks").doc(id);
     
-    // ડેટાબેઝના માળખા પ્રમાણે adminReply અને repliedAt અપડેટ થશે
     await feedbackRef.update({
       adminReply: adminReply || "",
       repliedAt: new Date().toISOString()
@@ -153,5 +159,20 @@ app.post("/api/feedback/:id/reply", async (req, res) => {
     res.status(500).json({ error: "જવાબ ગોઠવવામાં લોચો થયો." });
   }
 });
+
+// 🗑️ ૪. એડમિન દ્વારા કમેન્ટ ડિલીટ કરવાનો રાઉટ (DELETE)
+app.delete("/api/feedback/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    await db.collection("feedbacks").doc(id).delete();
+    
+    res.status(200).json({ success: true, message: "પ્રતિભાવ સફળતાપૂર્વક ડિલીટ થયો!" });
+  } catch (error) {
+    console.error("Delete feedback error:", error);
+    res.status(500).json({ error: "પ્રતિભાવ ડિલીટ કરવામાં ભૂલ થઈ." });
+  }
+});
+
 // SERVER START
 app.listen(5000, () => console.log("🚀 MISSION TAT GUJARAT Backend Live on Port 5000"));
