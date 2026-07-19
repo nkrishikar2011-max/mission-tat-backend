@@ -96,6 +96,38 @@ app.post("/api/products", uploadConfig, createProduct);
 app.put("/api/products/:id", uploadConfig, updateProduct);
 app.delete("/api/products/:id", deleteProduct);
 app.post('/api/auth/firebase-login', firebaseLogin);
+// 💬 ૧. તાજેતરના બધા જ સજેશન્સ/ફીડબેક મેળવવાનો રાઉટ (GET)
+app.get("/api/feedback", async (req, res) => {
+  try {
+    const snapshot = await db.collection("feedback").orderBy("createdAt", "desc").get();
+    const feedbacks = [];
+    snapshot.forEach(doc => {
+      feedbacks.push({ id: doc.id, ...doc.data() });
+    });
+    res.status(200).json(feedbacks);
+  } catch (error) {
+    console.error("Fetch feedback error:", error);
+    res.status(500).json({ error: "ફીડબેક લોડ કરવામાં ભૂલ થઈ." });
+  }
+});
 
+// 📝 ૨. નવો ફીડબેક/મટીરિયલ સજેશન પબ્લિશ કરવાનો રાઉટ (POST)
+app.post("/api/feedback", async (req, res) => {
+  try {
+    const { materialDemand, review } = req.body;
+    
+    const newFeedback = {
+      materialDemand: materialDemand || "",
+      review: review || "",
+      createdAt: new Date().toISOString()
+    };
+
+    await db.collection("feedback").add(newFeedback);
+    res.status(201).json({ success: true, message: "સૂચન સફળતાપૂર્વક પબ્લિશ થયું!" });
+  } catch (error) {
+    console.error("Add feedback error:", error);
+    res.status(500).json({ error: "સૂચન સબમિટ કરવામાં ભૂલ થઈ." });
+  }
+});
 // SERVER START
 app.listen(5000, () => console.log("🚀 MISSION TAT GUJARAT Backend Live on Port 5000"));
