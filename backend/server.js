@@ -96,10 +96,11 @@ app.post("/api/products", uploadConfig, createProduct);
 app.put("/api/products/:id", uploadConfig, updateProduct);
 app.delete("/api/products/:id", deleteProduct);
 app.post('/api/auth/firebase-login', firebaseLogin);
-// 💬 ૧. તાજેતરના બધા જ સજેશન્સ/ફીડબેક મેળવવાનો રાઉટ (GET)
+// 💬 ૧. તાજેતરના બધા જ સજેશન્સ મેળવવાનો રાઉટ (GET)
 app.get("/api/feedback", async (req, res) => {
   try {
-    const snapshot = await db.collection("feedback").orderBy("createdAt", "desc").get();
+    // કલેક્શનનું સાચું નામ 'feedbacks' છે
+    const snapshot = await db.collection("feedbacks").orderBy("createdAt", "desc").get();
     const feedbacks = [];
     snapshot.forEach(doc => {
       feedbacks.push({ id: doc.id, ...doc.data() });
@@ -111,18 +112,21 @@ app.get("/api/feedback", async (req, res) => {
   }
 });
 
-// 📝 ૨. નવો ફીડબેક/મટીરિયલ સજેશન પબ્લિશ કરવાનો રાઉટ (POST)
+// 📝 ૨. નવો ફીડબેક પબ્લિશ કરવાનો રાઉટ (POST)
 app.post("/api/feedback", async (req, res) => {
   try {
-    const { materialDemand, review } = req.body;
+    const { materialDemand, reviewText, userName, userId } = req.body;
     
+    // ડેટાબેઝના અસલી માળખા પ્રમાણે ફીલ્ડ સેટ કર્યા
     const newFeedback = {
       materialDemand: materialDemand || "",
-      review: review || "",
+      reviewText: reviewText || "", // સાચું નામ reviewText
+      userName: userName || "Anonymous",
+      userId: userId || "",
       createdAt: new Date().toISOString()
     };
 
-    await db.collection("feedback").add(newFeedback);
+    await db.collection("feedbacks").add(newFeedback);
     res.status(201).json({ success: true, message: "સૂચન સફળતાપૂર્વક પબ્લિશ થયું!" });
   } catch (error) {
     console.error("Add feedback error:", error);
