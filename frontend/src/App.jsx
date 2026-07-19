@@ -23,7 +23,7 @@ import Leaderboard from "./pages/MockTest/Leaderboard";
 import AdminAnalytics from "./pages/Admin/AdminAnalytics";
 import AnswerKey from "./pages/MockTest/AnswerKey";
 import AnalyticsReport from "./pages/MockTest/AnalyticsReport";
-
+import ModelPaperGenerator from "./pages/MockTest/ModelPaperGenerator";
 // Authentication System Imports (Secure Identity Management)
 import Login from "./pages/Auth/Login";
 // ⚡ ફિક્સ: સાઈન-અપ કમ્પોનન્ટનું સેફ ઈમ્પોર્ટ વેલિડેશન
@@ -90,7 +90,8 @@ export default function App() {
         <Route path="/mock-test/dashboard" element={<MockTestDashboard />} />
         <Route path="/mock-test/live/:testId" element={<ExamWindow />} />
         <Route path="/mock-test/result/:attemptId" element={<TestResult />} />
-        
+        // App.jsx ના રૂટ્સની અંદર આ લાઇન પ્લગ કરી દો ભાઈ:
+<Route path="/mock-test/model-papers" element={<ModelPaperGenerator />} />
         {/* ડાયનેમિક સોલ્યુશન આન્સર કી અને એનાલિટિક્સ રૂટ્સ */}
         <Route path="/mock-test/answer-key/:attemptId" element={<AnswerKey />} />
         <Route path="/mock-test/analytics" element={<AnalyticsReport />} />

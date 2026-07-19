@@ -1,14 +1,11 @@
 // frontend/src/pages/MockTest/AnalyticsReport.jsx
-// (Taddan navi file - Full Sectional Analytics Matrix & Performance Insights)
+// (FARJIYAT AKHI FILE REPLACE - Router Context Immunity Edition)
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
 export default function AnalyticsReport() {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
-  // લોકલ સેન્ડબોક્સ એનાલિટિક્સ ડેટા સ્ટેટિક મિલિટરી ગ્રેડ વાયરિંગ
   const [analyticsData, setAnalyticsData] = useState({
     overallRank: "24 / 1,450",
     globalPercentile: "98.3%",
@@ -23,9 +20,14 @@ export default function AnalyticsReport() {
   });
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500);
+    const timer = setTimeout(() => setLoading(false), 300);
     return () => clearTimeout(timer);
   }, []);
+
+  // ⚡ Router Context વગર ડાયરેક્ટ નેવિગેશન બાયપાસ
+  const handleGoDashboard = () => {
+    window.location.href = "/mock-test/dashboard";
+  };
 
   if (loading) return <div style={{ color: "#FFE07D", backgroundColor: "#09090b", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>⚙️ પર્સનલાઇઝ્ડ રિપોર્ટ જનરેટ થઈ રહ્યો છે...</div>;
 
@@ -36,10 +38,10 @@ export default function AnalyticsReport() {
         {/* HEADER BLOCK */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#1c1c1e", border: "1px solid #27272a", padding: "20px 30px", borderRadius: "20px", marginBottom: "30px" }}>
           <div>
-            <span style={{ fontSize: "11px", color: "#FFE07D", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px" }}>એડવાન્સ પર્ફોર્મન્સ ડાયગ્નોસ્ટિક્સ</span>
+            <span style={{ fontSize: "11px", color: "#FFE07D", fontWeight: "bold", textTransform: "uppercase" }}>એડવાન્સ પર્ફોર્મન્સ ડાયગ્નોસ્ટિક્સ</span>
             <h2 style={{ margin: "4px 0 0 0", color: "#fff", fontSize: "22px" }}>📊 તમારો ઊંડાણપૂર્વકનો એનાલિટિક્સ રિપોર્ટ</h2>
           </div>
-          <button onClick={() => navigate("/mock-test/dashboard")} style={{ background: "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)", color: "#000", border: "none", padding: "10px 20px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer" }}>
+          <button onClick={handleGoDashboard} style={{ background: "linear-gradient(135deg, #FFE07D 0%, #F5B041 100%)", color: "#000", border: "none", padding: "10px 20px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer" }}>
             ડેશબોર્ડ પર પાછા જાઓ
           </button>
         </div>
@@ -60,10 +62,9 @@ export default function AnalyticsReport() {
           ))}
         </div>
 
-        {/* MAIN ANALYSIS CONTENT: SECTION-WISE PROGRESS BARS */}
+        {/* MAIN ANALYSIS CONTENT */}
         <div style={{ backgroundColor: "#1c1c1e", border: "1px solid #27272a", padding: "30px", borderRadius: "24px", marginBottom: "30px" }}>
           <h3 style={{ margin: "0 0 24px 0", color: "#fff", fontSize: "18px" }}>📚 વિષયવાર પ્રદર્શન વિશ્લેષણ</h3>
-          
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             {analyticsData.sections.map((sec, idx) => {
               const percentage = ((sec.correct / sec.total) * 100).toFixed(1);
@@ -73,16 +74,8 @@ export default function AnalyticsReport() {
                     <span style={{ color: "#fff", fontWeight: "bold" }}>{sec.name}</span>
                     <span style={{ color: sec.color, fontWeight: "bold" }}>{sec.correct} / {sec.total} ({percentage}%)</span>
                   </div>
-                  {/* Track line */}
                   <div style={{ width: "100%", height: "10px", backgroundColor: "#09090b", borderRadius: "99px", overflow: "hidden" }}>
-                    {/* Progress Fill Line */}
-                    <div style={{ 
-                      width: `${percentage}%`, 
-                      height: "100%", 
-                      background: sec.color, 
-                      borderRadius: "99px",
-                      transition: "width 0.5s ease-in-out"
-                    }} />
+                    <div style={{ width: `${percentage}%`, height: "100%", background: sec.color, borderRadius: "99px" }} />
                   </div>
                 </div>
               );
@@ -90,11 +83,11 @@ export default function AnalyticsReport() {
           </div>
         </div>
 
-        {/* BOTTOM INSIGHT CARD */}
+        {/* AI INSIGHT CARD */}
         <div style={{ backgroundColor: "rgba(255,224,125,0.02)", border: "1px solid rgba(255,224,125,0.2)", padding: "24px", borderRadius: "20px" }}>
           <h4 style={{ margin: "0 0 8px 0", color: "#FFE07D", fontSize: "15px" }}>💡 મિશન TAT નિષ્ણાત માર્ગદર્શન (AI Insights)</h4>
           <p style={{ margin: 0, fontSize: "13px", color: "#a1a1aa", lineHeight: "1.6" }}>
-            નિતિનભાઈ, તમારું **ગણિત અને તાર્કિક ક્ષમતા** તેમજ **ભાષાકીય સજ્જતા** નું પ્રદર્શન ખૂબ જ ઉત્કૃષ્ટ રહ્યું છે. સેકન્ડરી મેઈન્સ પરીક્ષાને ધ્યાનમાં રાખતા, **શિક્ષણના મનોવિજ્ઞાન** માં જે પ્રશ્નો ખોટા પડ્યા છે, તેમાં પ્રિયાજે અને બ્લુમના વર્ગીકરણના ટોપિક્સનું રિવિઝન વધારવાની જરૂર છે. એકંદરે તમે સેફ ઝોનમાં છો ભાઈ, મહેનત ચાલુ રાખો!
+            નિતિનભાઈ, તમારું પ્રદર્શન ખૂબ જ ઉત્કૃષ્ટ રહ્યું છે. સેકન્ડરી મેઈન્સ પરીક્ષાને ધ્યાનમાં રાખતા મહેનત ચાલુ રાખો, તમે સેફ ઝોનમાં છો ભાઈ!
           </p>
         </div>
 

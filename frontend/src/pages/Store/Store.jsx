@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axiosOriginal from "axios";
+import axios from "axios";
 
-const axiosInstance = axiosOriginal;
+const axiosInstance = axios;
 
 export default function Store() {
   const [products, setProducts] = useState([]);
@@ -35,11 +35,18 @@ export default function Store() {
   useEffect(() => { 
     fetchProducts(); 
     fetchFeedbacks();
+    recordStoreHit(); // 📊 ઓટોમેટીક પેજ વિઝિટ રેકોર્ડ કરશે
     const savedUser = localStorage.getItem("custom_user");
     if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
 
-  // 🛠️ હેલ્પર ફંક્શન: ડેટાબેઝમાં રહેલા જૂના localhost પાથને ઓટોમેટીકલી લાઈવ રેન્ડર યુઆરએલ સાથે રીપ્લેસ કરશે
+  // 📊 ઓટોમેટીક ટ્રાફિક ટ્રેકર
+  const recordStoreHit = async () => {
+    try {
+      await axiosInstance.post("https://mission-tat-backend.onrender.com/api/analytics/hit");
+    } catch (e) { console.error("Traffic tracking log error", e); }
+  };
+
   const formatImageUrl = (url) => {
     if (!url) return "https://via.placeholder.com/150";
     if (url.includes("localhost:5000")) {
@@ -109,44 +116,39 @@ export default function Store() {
     
     const userId = user ? user.mobile : "master_topper_user";
     try {
-      const res = await axiosInstance.get(`https://mission-tat-backend.onrender.com/api/payments/check-status?productId={product.id}&userId={userId}`);
+      const res = await axiosInstance.get(`https://mission-tat-backend.onrender.com/api/payments/check-status?productId=${product.id || product._id}&userId=${userId}`);
       setIsUnlocked(res.data.isPurchased);
     } catch (err) { setIsUnlocked(false); }
   };
 
-  // 🛠️ ફિક્સ: નામ કપાવાના અને લોકલહોસ્ટના લોચા વગર સીધી જ નવી લાઈવ ટેબમાં ઓપન થશે
   const triggerInlineView = (fileUrl) => {
-    const liveUrl = fileUrl.includes("localhost:5000") 
+    let liveUrl = fileUrl.includes("localhost:5000") 
       ? fileUrl.replace("http://localhost:5000", "https://mission-tat-backend.onrender.com") 
       : fileUrl;
+    
+    const match = liveUrl.match(/id=([a-zA-Z0-9-_]+)/) || liveUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (match && match[1]) {
+      liveUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+    }
+    
     window.open(liveUrl, '_blank');
   };
 
-  // 🛠️ ફિક્સ: ડાયરેક્ટ અસલી લાઈવ યુઆરએલ બ્લોબ ટ્રીગર લોજિક
-  const triggerDownload = async (fileUrl, originalName) => {
+  const triggerDownload = async (fileUrl) => {
     try {
-      const liveUrl = fileUrl.includes("localhost:5000") 
+      let liveUrl = fileUrl.includes("localhost:5000") 
         ? fileUrl.replace("http://localhost:5000", "https://mission-tat-backend.onrender.com") 
         : fileUrl;
 
-      const response = await axiosInstance({ 
-        url: liveUrl, 
-        method: 'GET', 
-        responseType: 'blob' 
-      });
-      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      
-      const fallbackName = liveUrl.substring(liveUrl.lastIndexOf('/') + 1);
-      link.setAttribute('download', originalName || fallbackName);
-      
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const match = liveUrl.match(/id=([a-zA-Z0-9-_]+)/) || liveUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (match && match[1]) {
+        liveUrl = `https://docs.google.com/uc?export=download&id=${match[1]}`;
+      }
+
+      window.open(liveUrl, '_blank');
     } catch (error) { 
       console.error(error);
-      alert("❌ ડાઉનલોડ નિષ્ફળ થયું."); 
+      alert("❌ ડાઉનલોડ પ્રક્રિયામાં કોઈ ભૂલ થઈ."); 
     }
   };
 
@@ -158,14 +160,14 @@ export default function Store() {
         const { order, keyId, isTestMode } = res.data;
         if (isTestMode) {
           if (window.confirm("💸 ટેસ્ટ મોડ પેમેન્ટ સિમ્યુલેશન: મટીરિયલ અનલોક કરવા OK દબાવો.")) {
-            await axiosInstance.post("https://mission-tat-backend.onrender.com/api/payments/verify", { productId: selectedProduct.id, userId: currentUser.mobile });
+            await axiosInstance.post("https://mission-tat-backend.onrender.com/api/payments/verify", { productId: selectedProduct.id || selectedProduct._id, userId: currentUser.mobile });
             setIsUnlocked(true);
           }
         } else {
           const options = {
             key: keyId, amount: order.amount, name: "MISSION TAT GUJARAT", order_id: order.id,
             handler: async () => { 
-              await axiosInstance.post("https://mission-tat-backend.onrender.com/api/payments/verify", { productId: selectedProduct.id, userId: currentUser.mobile }); 
+              await axiosInstance.post("https://mission-tat-backend.onrender.com/api/payments/verify", { productId: selectedProduct.id || selectedProduct._id, userId: currentUser.mobile }); 
               setIsUnlocked(true); 
             },
             prefill: { name: currentUser.name, contact: currentUser.mobile },
@@ -222,7 +224,6 @@ export default function Store() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "30px", marginBottom: "50px" }}>
               {products.filter(p => activeCategory === "All Materials" || (p.categories && p.categories.includes(activeCategory)) || p.category === activeCategory).map(prod => (
                 <div key={prod.id || prod._id} onClick={() => handleProductSelect(prod)} style={{ backgroundColor: "#18181b", border: "1px solid #27272a", borderRadius: "20px", padding: "16px", cursor: "pointer" }}>
-                  {/* 🛠️ ફિક્સ: જુના ગાયબ થયેલા લોકલહોસ્ટ કવર પેજને પણ લાઈવ કન્વર્ટ કરીને બતાવશે */}
                   <img src={formatImageUrl(prod.thumbnail)} style={{ width: "100%", height: "180px", objectFit: "cover", borderRadius: "12px" }} alt="cover" />
                   <div style={{ marginTop: "12px" }}>
                     <span style={{ color: "#dc2626", fontSize: "11px", fontWeight: "bold" }}>{Array.isArray(prod.categories) ? prod.categories.join(", ") : prod.category}</span>
@@ -300,7 +301,7 @@ export default function Store() {
                 <input type="number" placeholder="મોબાઈલ નંબર" value={tempMobile} onChange={(e) => setTempMobile(e.target.value)} style={{ background: "#09090b", border: "1px solid #27272a", padding: "10px", color: "#fff", borderRadius: "8px" }} required />
                 <div style={{ display: "flex", gap: "10px", marginTop: "5px" }}>
                   <button type="button" onClick={() => setShowNameModal(false)} style={{ flex: 1, padding: "10px", background: "#27272a", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}>કેન્સલ</button>
-                  <button type="submit" style={{ flex: 1, padding: "10px", background: "#dc2626", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>セવ કરો</button>
+                  <button type="submit" style={{ flex: 1, padding: "10px", background: "#dc2626", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>સેવ કરો</button>
                 </div>
               </form>
             </div>
@@ -324,7 +325,7 @@ export default function Store() {
                   <div>
                     <h4 style={{ color: "#22c55e", margin: "0 0 12px 0" }}>🔓 અનલોક થયેલું મટીરિયલ બંડલ:</h4>
                     {selectedProduct.files && selectedProduct.files.length > 1 && (
-                      <button onClick={() => selectedProduct.files.forEach(f => triggerDownload(f.fileUrl, f.fileName))} style={{ background: "#16a34a", color: "#fff", border: "none", padding: "10px 12px", borderRadius: "8px", cursor: "pointer", marginBottom: "15px", width: "100%", fontWeight: "bold" }}>⚡ Download All Files (Single Click)</button>
+                      <button onClick={() => selectedProduct.files.forEach(f => triggerDownload(f.fileUrl))} style={{ background: "#16a34a", color: "#fff", border: "none", padding: "10px 12px", borderRadius: "8px", cursor: "pointer", marginBottom: "15px", width: "100%", fontWeight: "bold" }}>⚡ Download All Files (Single Click)</button>
                     )}
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {selectedProduct.files?.map((file, idx) => (
@@ -332,7 +333,7 @@ export default function Store() {
                           <span style={{ fontSize: "13px", paddingRight: "10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60%" }}>{file.fileName}</span>
                           <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
                             <button onClick={() => triggerInlineView(file.fileUrl)} style={{ background: "#27272a", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "12px" }}>View</button>
-                            <button onClick={() => triggerDownload(file.fileUrl, file.fileName)} style={{ background: "#dc2626", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "12px" }}>Download</button>
+                            <button onClick={() => triggerDownload(file.fileUrl)} style={{ background: "#dc2626", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "12px" }}>Download</button>
                           </div>
                         </div>
                       ))}

@@ -50,7 +50,7 @@ export default function MockTestDashboard() {
       : `TET-2 ${selectedSubject === "maths" ? "ગણિત-વિજ્ઞાન" : selectedSubject === "bhasha" ? "ભાષા વિષય" : "સામાજિક વિજ્ઞાન"} મોક ટેસ્ટ`;
 
     return Array.from({ length: 50 }, (_, i) => ({
-      id: `${selectedExam}_${selectedSubject || "gen"}_test_${i + 1}`,
+      id: `set_${i + 1}`,
       title: `${titlePrefix} - ${String(i + 1).padStart(2, "0")}`,
       totalQuestions: 150, // ⚡ ફિક્સ: લોકો આકર્ષાય એના માટે ફ્રી ટેસ્ટમાં પણ પૂરા ૧૫૦ પ્રશ્નોનો ભડાકો!
       duration: 120,       // ⚡ ફૂલ ૧૨૦ મિનિટની પરીક્ષા એન્જિન પરીક્ષા

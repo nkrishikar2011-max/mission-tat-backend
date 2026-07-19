@@ -1,14 +1,14 @@
 // frontend/src/firebase.js
-// (Taddan navi/Full file - Central Firebase Security Engine)
+// (FARJIYAT AKHI FILE REPLACE - Live Firebase API Protection Engine)
 
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// 🔐 તારા ફાયરબેઝ પ્રોજેક્ટના ક્રેડેન્શિયલ્સ (સેન્ડબોક્સ સિક્યોરિટી મોડ)
-// પ્રોડક્શનમાં આને .env ફાઈલમાંથી લોડ કરાય, પણ અત્યારે લોકલી કનેક્ટ કરવા માટેનું ગ્રીડ
+// 🔐 ⚡ મહત્વની સૂચના: તારા ફાયરબેઝ કન્સોલ (Project Settings) માંથી સાચી API Key લાવીને
+// અહીં "YOUR_ACTUAL_API_KEY" ની જગ્યાએ પેસ્ટ કરી દેજે ભાઈ!
 const firebaseConfig = {
-  apiKey: "AIzaSyA1-YOUR_ACTUAL_API_KEY_HERE",
+  apiKey: "AIzaSyAqwjM1Fnad7RGZIfodmpjiH3qlywRKTls", 
   authDomain: "mission-tat-gujarat.firebaseapp.com",
   projectId: "mission-tat-gujarat",
   storageBucket: "mission-tat-gujarat.appspot.com",
@@ -19,7 +19,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// 🛡️ એન્ક્રિપ્ટેડ ઓથેન્ટિકેશન અને ડેટાબેઝ એન્જિન એક્સપોર્ટ
+// 🛡️ એન્ક્રિપ્ટેડ ઓથેન્ટિકેશન અને ક્લાઉડ ડેટાબેઝ સેફગાર્ડ એક્સપોર્ટ
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export default app;
