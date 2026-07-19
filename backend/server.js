@@ -22,6 +22,12 @@ app.use(cors());
 app.use(express.json({ limit: "500mb" }));
 app.use(express.urlencoded({ limit: "500mb", extended: true }));
 
+// Razorpay Instance Configuration
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
 // Routing
 app.use("/api/mock-tests", mockTestRoutes);
 app.use("/public/uploads", express.static(path.join(__dirname, "public/uploads")));
@@ -38,6 +44,45 @@ app.post("/api/generate-mains-paper", async (req, res) => {
   } catch (err) {
     console.error("Generator Error:", err);
     res.status(500).json({ error: "Data file not found or error reading file" });
+  }
+});
+
+// 💳 ૧. Razorpay ઓર્ડર ક્રિએટ કરવાનો રાઉટ (POST)
+app.post("/api/payments/order", async (req, res) => {
+  try {
+    const { amount, currency } = req.body;
+    const options = {
+      amount: amount * 100, // amount in paisa
+      currency: currency || "INR",
+      receipt: `receipt_${Date.now()}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+    res.status(200).json({ success: true, order });
+  } catch (error) {
+    console.error("Razorpay order creation error:", error);
+    res.status(500).json({ success: false, error: "ઓર્ડર જનરેટ કરવામાં ભૂલ થઈ." });
+  }
+});
+
+// 💳 ૨. પેમેન્ટ સ્ટેટસ વેરીફાય કરવાનો રાઉટ (GET/POST)
+app.get("/api/payments/check-status", async (req, res) => {
+  try {
+    const { productId, userId } = req.query;
+    
+    // યુઝરે પ્રોડક્ટ ખરીદેલી છે કે નહીં તે કન્ફર્મ કરવા માટે 'purchases' કલેક્શન ચેક કરો
+    const purchaseSnapshot = await db.collection("purchases")
+      .where("userId", "==", userId)
+      .where("productId", "==", productId)
+      .get();
+
+    if (!purchaseSnapshot.empty) {
+      return res.status(200).json({ hasPurchased: true });
+    }
+    res.status(200).json({ hasPurchased: false });
+  } catch (error) {
+    console.error("Check status error:", error);
+    res.status(500).json({ error: "પેમેન્ટ સ્ટેટસ ચેક કરવામાં ભૂલ થઈ." });
   }
 });
 
@@ -62,7 +107,6 @@ app.post("/api/analytics/hit", async (req, res) => {
 // 📊 2. એનાલિટિક્સ ડેટા મેળવવાનો રાઉટ
 app.get("/api/analytics/traffic", async (req, res) => {
   try {
-    // એનાલિટિક્સ માટે અસલી કલેક્શન 'feedbacks' માંથી ડેટા ગણશે
     const feedbackSnapshot = await db.collection("feedbacks").get();
     const productsSnapshot = await db.collection("products").get();
     const trafficDoc = await db.collection("analytics").doc("site_traffic").get();
@@ -108,8 +152,7 @@ app.get("/api/feedback", async (req, res) => {
       feedbacks.push({ 
         id: doc.id, 
         ...data,
-        // userId માં જ મોબાઈલ નંબર છે, એટલે એને ડાયરેક્ટ mobile તરીકે મોકલી દીધો
-        mobile: data.userId || "નથી નોંધાયો" 
+        mobile: data.userId || "નથી નોંધાયો"
       });
     });
     res.status(200).json(feedbacks);
@@ -147,7 +190,6 @@ app.post("/api/feedback/:id/reply", async (req, res) => {
     const { adminReply } = req.body;
 
     const feedbackRef = db.collection("feedbacks").doc(id);
-    
     await feedbackRef.update({
       adminReply: adminReply || "",
       repliedAt: new Date().toISOString()
@@ -164,9 +206,7 @@ app.post("/api/feedback/:id/reply", async (req, res) => {
 app.delete("/api/feedback/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    
     await db.collection("feedbacks").doc(id).delete();
-    
     res.status(200).json({ success: true, message: "પ્રતિભાવ સફળતાપૂર્વક ડિલીટ થયો!" });
   } catch (error) {
     console.error("Delete feedback error:", error);
